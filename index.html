@@ -1,0 +1,10 @@
+<!DOCTYPE html><html><body><script>
+if(window.opener){
+  const p=new URLSearchParams(window.location.search);
+  window.opener.postMessage(
+    {type:'sf_auth_code', code:p.get('code'), state:p.get('state')},
+    'https://aibs.scorpion.co'
+  );
+  window.close();
+}
+</script></body></html>
