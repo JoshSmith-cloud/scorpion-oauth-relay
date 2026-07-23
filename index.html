@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -167,7 +168,7 @@ tr.acc-rep-row:hover td{background:#fafafa}
 .gm-card-hdr{padding:11px 14px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px}
 .gm-card-title{font-size:19px;font-weight:700;color:#0f172a}
 .gm-card-mgr{font-size:15px;color:#94a3b8;margin-left:auto}
-.gm-metrics-row{display:grid;grid-template-columns:repeat(4,1fr)}
+.gm-metrics-row{display:grid;grid-template-columns:repeat(5,1fr)}
 .gm-m{padding:12px 10px;text-align:center;border-right:1px solid #f1f5f9}
 .gm-m:last-child{border-right:none}
 .gm-m-n{font-size:35px;font-weight:800;line-height:1;margin-bottom:2px}
@@ -360,9 +361,12 @@ tr.acc-rep-row:hover td{background:#fafafa}
 </div>
 
 <!-- TITLE -->
-<div class="page-title">
+<div class="page-title" style="position:relative">
   <div class="page-title-main">Home Services Sales Magic</div>
   <div class="page-title-sub">Scorpion</div>
+  <button id="resync-btn" onclick="resync()" title="Refresh data" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s" onmouseover="this.style.background='#334155';this.style.color='#fff'" onmouseout="this.style.background='#1e293b';this.style.color='#94a3b8'">
+    <span id="resync-icon" style="display:inline-block;transition:transform .4s">↻</span> Resync
+  </button>
 </div>
 
 <!-- TAB NAV -->
@@ -510,18 +514,83 @@ function hideAuthScreen(){
   document.getElementById('main').style.display='';
 }
 
-// ── Start OAuth Implicit flow ─────────────────────────────────────────────────
-// SF returns access_token directly in the URL hash — no code exchange needed.
-// Hosted on GitHub Pages (no sandboxed iframe), so sessionStorage and redirects work.
+// ── PKCE helpers ─────────────────────────────────────────────────────────────
+function pkceVerifier(){
+  const arr=new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  return btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+async function pkceChallenge(v){
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));
+  return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+// ── Start OAuth Auth Code + PKCE (full-page redirect) ────────────────────────
+// Hosted on GitHub Pages — no sandboxed iframe, sessionStorage works fine.
 async function startAuth(){
+  const verifier=pkceVerifier();
+  const challenge=await pkceChallenge(verifier);
+  sessionStorage.setItem('pkce_verifier',verifier);
   const params=new URLSearchParams({
-    response_type:'token',
+    response_type:'code',
     client_id:SF_CLIENT_ID,
     redirect_uri:SF_REDIRECT_URI,
     scope:'api',
     state:crypto.randomUUID(),
+    code_challenge:challenge,
+    code_challenge_method:'S256',
   });
   window.location.href=`${SF_LOGIN_URL}/services/oauth2/authorize?${params}`;
+}
+
+// ── Exchange auth code for token ──────────────────────────────────────────────
+async function handleOAuthCallback(){
+  const params=new URLSearchParams(window.location.search);
+  const code=params.get('code');
+  if(!code)return false;
+  const verifier=sessionStorage.getItem('pkce_verifier');
+  sessionStorage.removeItem('pkce_verifier');
+  if(!verifier){showAuthScreen('Auth error: session expired. Please try signing in again.');return true;}
+  try{history.replaceState({},'',window.location.pathname);}catch(e){}
+  try{
+    const body=new URLSearchParams({
+      grant_type:'authorization_code',
+      client_id:SF_CLIENT_ID,
+      redirect_uri:SF_REDIRECT_URI,
+      code,
+      code_verifier:verifier,
+    });
+    const resp=await fetch(`${SF_LOGIN_URL}/services/oauth2/token`,{
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body,
+    });
+    if(!resp.ok){const t=await resp.text();showAuthScreen(`Sign-in failed: ${t.slice(0,300)}`);return true;}
+    const tok=await resp.json();
+    storSet('sf_access_token',tok.access_token);
+    const base=tok.instance_url||'https://scorpion.lightning.force.com';
+    storSet('sf_instance_url',base);
+    _sfInstanceUrl=base;
+    return true;
+  }catch(err){
+    showAuthScreen(`Auth error: ${err.message}`);
+    return true;
+  }
+}
+
+// ── Resync: clear cache and reload all data ───────────────────────────────────
+function resync(){
+  // Clear all cached data
+  Object.keys(_activityCache).forEach(k=>delete _activityCache[k]);
+  Object.keys(_quotaCache).forEach(k=>delete _quotaCache[k]);
+  // Spin the icon
+  const icon=document.getElementById('resync-icon');
+  if(icon){
+    icon.style.transition='transform 0.8s linear';
+    icon.style.transform='rotate(360deg)';
+    setTimeout(()=>{icon.style.transition='none';icon.style.transform='rotate(0deg)';},850);
+  }
+  load();
 }
 
 // ── Sign out ─────────────────────────────────────────────────────────────────
@@ -532,23 +601,16 @@ function signOut(){
   showAuthScreen();
 }
 
-// ── Init: read token from hash (SF implicit redirect) or restore session ──────
+// ── Init: handle code callback or restore session ─────────────────────────────
 async function initAuth(){
-  try{
-    const h=new URLSearchParams(window.location.hash.slice(1));
-    const tok=h.get('access_token');
-    const inst=h.get('instance_url');
-    const err=h.get('error_description')||h.get('error');
-    if(tok){
-      storSet('sf_access_token',tok);
-      const base=inst?decodeURIComponent(inst):'https://scorpion.lightning.force.com';
-      storSet('sf_instance_url',base);
-      _sfInstanceUrl=base;
-      try{history.replaceState(null,'',window.location.pathname);}catch(e){}
-      hideAuthScreen();load();return;
+  if(window.location.search.includes('code=')){
+    const ok=await handleOAuthCallback();
+    if(ok){
+      if(storGet('sf_access_token')){hideAuthScreen();load();}
+      else showAuthScreen();
     }
-    if(err){showAuthScreen(decodeURIComponent(err));return;}
-  }catch(e){}
+    return;
+  }
   if(storGet('sf_access_token')){
     _sfInstanceUrl=storGet('sf_instance_url')||'https://scorpion.lightning.force.com';
     hideAuthScreen();load();return;
@@ -1134,6 +1196,11 @@ function renderGM(range,reps,extras={}){
           <div class="gm-m-n" style="color:#f59e0b">${t.disc}</div>
           <div class="gm-m-l">Sets</div>
           <div class="gm-m-sub">tgt ${discTgt}</div>
+        </div>
+        <div class="gm-m tip" data-tip="Meetings held (Outcome = Completed) · hold rate ${t.mSched>0?Math.round(t.held/t.mSched*100)+'%':'—'}">
+          <div class="gm-m-n" style="color:#a78bfa">${t.held||'—'}</div>
+          <div class="gm-m-l">Held</div>
+          <div class="gm-m-sub">${t.mSched>0?Math.round(t.held/t.mSched*100)+'% hold':' '}</div>
         </div>
         <div class="gm-m tip" data-tip="Closed Won deals in this period">
           <div class="gm-m-n" style="color:#3b82f6">${t.won||'—'}</div>
