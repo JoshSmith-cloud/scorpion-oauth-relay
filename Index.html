@@ -1,0 +1,2872 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HS Sales Dashboard (Standalone)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1e293b;font-size:19px;min-height:100vh}
+
+/* ── PAGE TITLE ── */
+.page-title{background:#0f172a;text-align:center;padding:22px 20px 18px}
+.page-title-main{font-size:40px;font-weight:900;color:#fff;letter-spacing:-0.5px;line-height:1}
+.page-title-sub{font-size:16px;color:#475569;margin-top:5px;letter-spacing:0.2px}
+
+/* ── TAB NAV ── */
+.tab-nav{background:#0f172a;display:flex;justify-content:center;padding:0 20px;border-top:1px solid #1e293b}
+.tab{padding:11px 28px;font-size:18px;font-weight:700;cursor:pointer;color:#64748b;border:none;background:none;border-bottom:2px solid transparent;transition:all .15s;letter-spacing:.3px;white-space:nowrap}
+.tab:hover:not(.active){color:#94a3b8}
+.tab.active{color:#fff;border-bottom-color:#3b82f6}
+
+/* ── FILTER BAR ── */
+.filter-bar{background:#1e293b;padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;border-top:1px solid #0f172a}
+.view-pills{display:flex;background:#0f172a;border-radius:8px;padding:3px;gap:2px}
+.vpill{padding:5px 14px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;color:#64748b;border:none;background:none;transition:all .15s;white-space:nowrap}
+.vpill.active{background:white;color:#0f172a}
+.vpill:hover:not(.active){color:#94a3b8}
+.filter-sep{width:1px;height:20px;background:#334155}
+.f-ctrl{display:flex;align-items:center;gap:6px}
+.f-ctrl label{font-size:12px;color:#64748b;font-weight:500}
+.f-ctrl select,.f-ctrl input[type="month"]{padding:4px 9px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:white;font-size:14px;font-weight:500;cursor:pointer;appearance:none;-webkit-appearance:none}
+.f-ctrl select{padding-right:24px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center}
+.f-ctrl input::-webkit-calendar-picker-indicator{filter:invert(.5)}
+.cmp-range-lbl{font-size:12px;color:#94a3b8;display:flex;align-items:center;gap:5px}
+.cmp-period-pill{background:#0f172a;color:#e2e8f0;padding:2px 7px;border-radius:4px;font-weight:600;font-size:12px}
+.cmp-vs{color:#475569;font-size:11px}
+.status-pill{font-size:12px;color:#475569;background:#0f172a;padding:4px 10px;border-radius:6px;white-space:nowrap}
+
+/* ── LOADING ── */
+.loading{display:flex;align-items:center;justify-content:center;min-height:280px;flex-direction:column;gap:10px}
+.spinner{width:26px;height:26px;border:2px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-label{font-size:15px;color:#94a3b8}
+.load-step{font-size:14px;color:#cbd5e1}
+.prog-bar{width:140px;height:2px;background:#e2e8f0;border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:#3b82f6;border-radius:2px;transition:width .3s}
+
+/* ── MAIN ── */
+.main{padding:14px 20px;max-width:1400px;margin:0 auto}
+
+/* ── TOOLTIPS (JS-driven, fixed position — avoids table overflow clipping) ── */
+.tip{cursor:default}
+#g-tip{position:fixed;background:#0f172a;color:#e2e8f0;font-size:12px;padding:6px 10px;border-radius:6px;pointer-events:none;z-index:9999;border:1px solid #334155;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:0;transition:opacity .12s;max-width:260px;white-space:normal;line-height:1.45}
+
+/* ── KPI TILES ── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.kpi-tile{background:white;border-radius:10px;border:1px solid #e2e8f0;padding:14px 16px;text-align:center;cursor:default}
+.kpi-n{font-size:45px;font-weight:900;line-height:1;margin-bottom:3px}
+.kpi-lbl{font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:3px}
+.kpi-sub{font-size:15px;color:#94a3b8}
+.kpi-conn{color:#3b82f6}
+.kpi-c2c{color:#10b981}
+.kpi-d2c{color:#f59e0b}
+
+/* ── FUNNEL ── */
+.funnel-row{display:flex;gap:1px;margin-bottom:12px;background:#e2e8f0;border-radius:10px;overflow:hidden}
+.f-stage{flex:1;background:white;padding:12px 8px;text-align:center;min-width:60px}
+.f-stage:first-child{border-radius:10px 0 0 10px}
+.f-stage:last-child{border-radius:0 10px 10px 0}
+.f-n{font-size:35px;font-weight:800;color:#0f172a;line-height:1}
+.f-lbl{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;margin-top:3px}
+.f-rate{font-size:15px;font-weight:600;margin-top:3px}
+.f-mrr{font-size:15px;font-weight:600;color:#10b981;margin-top:2px}
+
+/* ── TABLE AREA ── */
+.table-card{background:white;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden}
+.table-hdr{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f1f5f9;background:#fafafa;flex-wrap:wrap;gap:8px}
+.table-hdr-left{display:flex;align-items:center;gap:10px}
+.t-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.t-name{font-size:19px;font-weight:700;color:#0f172a}
+.t-mgr{font-size:15px;color:#94a3b8}
+.t-stats{display:flex;gap:12px}
+.t-stat-l{font-size:14px;color:#94a3b8;text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.t-stat-v{font-size:20px;font-weight:800;color:#0f172a;line-height:1.1}
+.t-stat-v.green{color:#10b981}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{padding:8px 10px;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;text-align:right;white-space:nowrap;border-bottom:1px solid #f1f5f9;background:#fafafa}
+thead th:first-child{text-align:left;padding-left:14px}
+.th-s{display:block;font-size:12px;font-weight:400;text-transform:none;letter-spacing:0;margin-top:1px;color:#cbd5e1}
+tbody td{padding:9px 10px;text-align:right;border-bottom:1px solid #f8fafc;white-space:nowrap;color:#334155}
+tbody td:first-child{text-align:left;padding-left:14px;font-weight:600;color:#0f172a;font-size:18px}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#fafafa}
+.tot td{background:#f0f4f8!important;border-top:2px solid #e2e8f0!important;font-weight:700;color:#0f172a}
+.num{font-size:18px;font-weight:700;color:#0f172a}
+.dim{color:#cbd5e1;font-size:16px}
+.hi{color:#10b981;font-weight:700}
+.mid{color:#f59e0b;font-weight:700}
+.lo{color:#ef4444;font-weight:700}
+.mrr{font-size:18px;font-weight:700;color:#10b981}
+.rpd{font-size:16px;font-weight:600;color:#3b82f6}
+.pct{font-size:16px;font-weight:700}
+.wc-wrap{display:inline-flex;align-items:center;gap:5px;justify-content:flex-end}
+.wc-nums{font-size:16px;font-weight:700;white-space:nowrap}
+.wc-tgt{font-size:15px;color:#cbd5e1}
+.wc-bar{width:28px;height:3px;background:#f1f5f9;border-radius:2px;overflow:hidden;flex-shrink:0}
+.wc-fill{height:100%;border-radius:2px}
+
+/* ── ACCORDION ── */
+.acc-team-row{cursor:pointer;user-select:none}
+.acc-team-row:hover td{background:#f0f7ff!important}
+.acc-toggle{display:inline-block;transition:transform .2s;margin-right:5px;color:#94a3b8;font-size:11px;font-style:normal}
+.acc-team-row.open .acc-toggle{transform:rotate(90deg)}
+tr.acc-rep-row{display:none}
+tr.acc-rep-row.visible{display:table-row}
+tr.acc-rep-row td:first-child{padding-left:30px!important;color:#334155!important;font-weight:500!important;font-size:14px!important}
+tr.acc-rep-row:hover td{background:#fafafa}
+
+/* ── COMPARE ── */
+.cmp-header-card{background:white;border-radius:10px;border:1px solid #e2e8f0;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.cmp-periods{display:flex;align-items:center;gap:10px}
+.cmp-p{text-align:center}
+.cmp-p-label{font-size:14px;color:#94a3b8;text-transform:uppercase;font-weight:600;letter-spacing:.4px}
+.cmp-p-val{font-size:20px;font-weight:800;color:#0f172a;margin-top:2px}
+.cmp-p-sub{font-size:15px;color:#94a3b8}
+.cmp-divider{font-size:20px;color:#e2e8f0;font-weight:300}
+.cmp-delta-summary{display:flex;gap:14px;flex-wrap:wrap}
+.cmp-ds-item{text-align:right}
+.cmp-ds-l{font-size:14px;color:#94a3b8;text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.cmp-ds-v{font-size:21px;font-weight:800}
+.cmp-section{margin-bottom:14px}
+.cmp-section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;margin-bottom:8px}
+.cmp-metrics-card{background:white;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:12px}
+.cmp-metrics-card thead th.col-a{color:#3b82f6}
+.cmp-metrics-card thead th.col-b{color:#94a3b8}
+.cmp-sep td{background:#f8fafc!important;border-top:1px solid #e2e8f0!important;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8!important;padding:4px 10px!important}
+.cmp-sep td:first-child{padding-left:14px!important}
+.teams-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:900px){.teams-grid{grid-template-columns:1fr}}
+
+/* ── AI CARD ── */
+.ai-card{background:white;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:700px){.ai-card{grid-template-columns:1fr}}
+.ai-wins{border-right:1px solid #f1f5f9}
+.ai-hdr{display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.ai-wins .ai-hdr{color:#15803d;background:#f0fdf4}
+.ai-focus .ai-hdr{color:#92400e;background:#fffbeb}
+.ai-badge{font-size:10px;padding:1px 5px;border-radius:4px;margin-left:auto;font-weight:700;letter-spacing:.3px}
+.ai-wins .ai-badge{background:#dcfce7;color:#15803d}
+.ai-focus .ai-badge{background:#fef3c7;color:#92400e}
+.ai-items{padding:4px 0}
+.ai-item{padding:8px 14px;font-size:14px;line-height:1.5;color:#334155;border-bottom:1px solid #f8fafc;display:flex;gap:8px;align-items:flex-start}
+.ai-item:last-child{border-bottom:none}
+.ai-num{font-size:11px;font-weight:800;min-width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.ai-wins .ai-num{background:#dcfce7;color:#15803d}
+.ai-focus .ai-num{background:#fef3c7;color:#92400e}
+.ai-loading{grid-column:1/-1;padding:20px;text-align:center;color:#94a3b8;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+.ai-spinner{width:14px;height:14px;border:1.5px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+.err{background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:16px;color:#b91c1c;text-align:center;font-size:15px;margin:16px 20px}
+
+/* ── GM ROLLUP ── */
+.gm-teams-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:800px){.gm-teams-grid{grid-template-columns:1fr}}
+.gm-card{background:white;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden}
+.gm-card-hdr{padding:11px 14px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px}
+.gm-card-title{font-size:19px;font-weight:700;color:#0f172a}
+.gm-card-mgr{font-size:15px;color:#94a3b8;margin-left:auto}
+.gm-metrics-row{display:grid;grid-template-columns:repeat(5,1fr)}
+.gm-m{padding:12px 10px;text-align:center;border-right:1px solid #f1f5f9}
+.gm-m:last-child{border-right:none}
+.gm-m-n{font-size:35px;font-weight:800;line-height:1;margin-bottom:2px}
+.gm-m-l{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#64748b}
+.gm-m-sub{font-size:14px;color:#94a3b8;margin-top:2px}
+.gm-pace-row{padding:8px 14px;border-top:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gm-pace-lbl{font-size:15px;color:#64748b;font-weight:600}
+.pace-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700}
+.pace-a{background:#dcfce7;color:#15803d}
+.pace-o{background:#fef3c7;color:#92400e}
+.pace-b{background:#fee2e2;color:#b91c1c}
+.gm-pipeline-card{background:white;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:12px}
+.gm-period-bar{background:white;border-radius:10px;border:1px solid #e2e8f0;padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.gm-period-lbl{font-size:19px;font-weight:700;color:#0f172a}
+.gm-period-sub{font-size:16px;color:#94a3b8;font-weight:400;margin-left:6px}
+.gm-totals{display:flex;gap:20px;flex-wrap:wrap}
+.gm-tot-item{text-align:right}
+.gm-tot-l{font-size:14px;color:#94a3b8;text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.gm-tot-v{font-size:20px;font-weight:800;color:#0f172a}
+.gm-tot-v.green{color:#10b981}
+
+/* ── GM KPI BAR ── */
+.gm-kpi-bar{display:grid;grid-template-columns:repeat(6,1fr);background:white;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:12px}
+@media(max-width:960px){.gm-kpi-bar{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.gm-kpi-bar{grid-template-columns:repeat(2,1fr)}}
+.gm-kpi-tile{padding:14px 10px;text-align:center;border-right:1px solid #f1f5f9}
+.gm-kpi-tile:last-child{border-right:none}
+.gm-kpi-n{font-size:35px;font-weight:900;line-height:1;margin-bottom:3px}
+.gm-kpi-l{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#64748b;margin-bottom:2px}
+.gm-kpi-sub{font-size:14px;color:#94a3b8}
+
+/* ── CHART CARD ── */
+.chart-card{background:white;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:12px}
+.chart-card-hdr{padding:10px 14px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.chart-card-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#64748b}
+.chart-container{height:200px;padding:12px 14px 14px;position:relative}
+
+/* ── TOP OPPS ── */
+.opps-card{background:white;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:12px}
+.opps-hdr{padding:10px 14px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.opps-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#64748b}
+.opp-stage-pills{display:flex;gap:4px;flex-wrap:wrap}
+.osp{padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;background:white;color:#64748b;transition:all .15s}
+.osp:hover{border-color:#cbd5e1;color:#334155}
+.osp.active{background:#0f172a;color:white;border-color:#0f172a}
+.osp.disc-f.active{background:#92400e;border-color:#92400e}
+.osp.prop-f.active{background:#1d4ed8;border-color:#1d4ed8}
+.osp.fcst-f.active{background:#6d28d9;border-color:#6d28d9}
+.stage-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap}
+.stage-disc{background:#fef3c7;color:#92400e}
+.stage-prop{background:#dbeafe;color:#1d4ed8}
+.stage-fcst{background:#ede9fe;color:#6d28d9}
+.stage-won{background:#dcfce7;color:#15803d}
+.stage-other{background:#f1f5f9;color:#475569}
+.opp-link{color:#0f172a;font-weight:600;text-decoration:none;font-size:18px}
+.opp-link:hover{color:#3b82f6;text-decoration:underline}
+
+/* ── ATTAINMENT BAR ── */
+.att-cell{display:inline-flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:64px}
+.att-bar{width:60px;height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden}
+.att-fill{height:100%;border-radius:2px;transition:width .4s}
+
+/* ── YEARLY PERFORMANCE TAB ── */
+.yr-main{display:flex;flex-direction:column;gap:16px;padding:16px}
+.yr-kpi-strip{display:flex;gap:10px;flex-wrap:wrap}
+.yr-kpi-tile{flex:1;min-width:120px;background:white;border-radius:10px;border:1px solid #e2e8f0;padding:12px 14px;cursor:default}
+.yr-kpi-n{font-size:25px;font-weight:800;line-height:1.1}
+.yr-kpi-l{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-top:2px}
+.yr-kpi-s{font-size:11px;color:#94a3b8;margin-top:1px}
+.yr-grid{display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px;align-items:start}
+.yr-gauge-card{background:white;border-radius:10px;border:1px solid #e2e8f0;padding:14px 12px 10px;text-align:center}
+.yr-gauge-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:6px}
+.yr-gauge-wrap{display:flex;justify-content:center;overflow:hidden;height:115px}
+.yr-gauge-val{font-size:22px;font-weight:800;margin-top:2px;line-height:1}
+.yr-gauge-pct{font-size:12px;color:#64748b;margin-top:4px}
+.yr-chart-card{background:white;border-radius:10px;border:1px solid #e2e8f0;padding:14px 12px}
+.yr-chart-title{font-size:15px;font-weight:700;color:#0f172a;margin-bottom:1px}
+.yr-chart-sub{font-size:11px;color:#94a3b8;margin-bottom:10px}
+.yr-hbar-list{display:flex;flex-direction:column;gap:5px}
+.yr-hbar-row{display:flex;align-items:center;gap:6px}
+.yr-hbar-label{font-size:12px;color:#334155;width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.yr-hbar-track{flex:1;height:16px;background:#f1f5f9;border-radius:3px;overflow:hidden}
+.yr-hbar-fill{height:100%;border-radius:3px;transition:width .5s}
+.yr-hbar-val{font-size:12px;font-weight:700;color:#0f172a;width:52px;text-align:right;flex-shrink:0}
+.yr-donut-wrap{display:flex;justify-content:center;align-items:center}
+.yr-avgdeal-card{background:white;border-radius:10px;border:1px solid #e2e8f0;padding:14px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.yr-avgdeal-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b}
+.yr-avgdeal-val{font-size:35px;font-weight:800;margin:6px 0 2px}
+.yr-avgdeal-sub{font-size:12px;color:#94a3b8}
+.yr-rep-table-wrap{width:100%}
+.yr-tbl{width:100%;border-collapse:collapse;font-size:14px}
+.yr-tbl th{padding:8px 10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#64748b;border-bottom:2px solid #e2e8f0;white-space:nowrap}
+.yr-tbl td{padding:7px 10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.yr-tbl tbody tr:hover{background:#f8fafc}
+@media(max-width:900px){.yr-grid{grid-template-columns:1fr 1fr;}}.yr-chart-card,.yr-gauge-card,.yr-avgdeal-card{min-width:0;overflow:hidden}
+
+/* ── CLOSED DEALS TAB ── */
+.cd-header{text-align:center;padding:18px 0 8px}
+.cd-header-title{font-size:30px;font-weight:900;font-style:italic;color:#0B345E;letter-spacing:-.5px}
+.cd-header-sub{font-size:14px;color:#94a3b8;margin-top:2px}
+.cd-grid{display:grid;grid-template-columns:1fr 2fr 2fr;gap:14px;padding:0 16px 16px}
+.cd-col{display:flex;flex-direction:column;gap:14px}
+.cd-card{background:white;border-radius:10px;border:1px solid #e2e8f0;padding:14px 16px}
+.cd-card-title{font-size:15px;font-weight:700;color:#0f172a}
+.cd-card-sub{font-size:12px;color:#3b82f6;font-weight:600;margin-bottom:10px}
+.cd-big-mrr{font-size:50px;font-weight:900;text-align:center;padding:18px 0 6px;line-height:1}
+.cd-big-sub{font-size:12px;color:#94a3b8;text-align:center;padding-bottom:10px}
+.cd-avg-val{font-size:40px;font-weight:900;text-align:center;padding:14px 0 4px;line-height:1}
+.cd-empty{font-size:14px;color:#94a3b8;text-align:center;padding:28px 0}
+.cd-hbar-list{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+.cd-hbar-row{display:flex;align-items:center;gap:6px}
+.cd-hbar-label{font-size:12px;color:#334155;width:88px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.cd-hbar-track{flex:1;height:18px;background:#f1f5f9;border-radius:3px;overflow:hidden;position:relative}
+.cd-hbar-fill{height:100%;border-radius:3px;transition:width .5s;display:flex;align-items:center;justify-content:flex-end;padding-right:5px}
+.cd-hbar-inlabel{font-size:11px;font-weight:700;color:white;white-space:nowrap}
+.cd-hbar-val{font-size:12px;font-weight:700;color:#0f172a;width:48px;text-align:right;flex-shrink:0}
+.cd-donut-wrap{display:flex;justify-content:center;align-items:center;padding:4px 0}
+.cd-unit-total{text-align:center;font-size:14px;color:#64748b;margin-top:4px}
+.cd-delta{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px}
+.cd-delta.up{background:#dcfce7;color:#16a34a}
+.cd-delta.dn{background:#fee2e2;color:#dc2626}
+.cd-delta.flat{background:#f1f5f9;color:#64748b}
+.cd-summary-row{display:flex;gap:10px;padding:0 16px 16px;flex-wrap:wrap}
+.cd-sum-tile{flex:1;min-width:120px;background:white;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;text-align:center}
+.cd-sum-n{font-size:22px;font-weight:800}
+.cd-sum-l{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-top:2px}
+.cd-sum-s{font-size:11px;color:#94a3b8;margin-top:1px}
+
+/* ── REP SCORECARD MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-card{background:white;border-radius:14px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);transform:translateY(8px);transition:transform .2s}
+.modal-overlay.open .modal-card{transform:translateY(0)}
+.modal-top{padding:16px 18px 14px;border-bottom:1px solid #f1f5f9;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;position:sticky;top:0;background:white;z-index:1}
+.modal-rep-name{font-size:22px;font-weight:800;color:#0f172a;line-height:1.1}
+.modal-rep-meta{font-size:14px;color:#94a3b8;margin-top:3px}
+.modal-close{width:28px;height:28px;border-radius:50%;border:none;background:#f1f5f9;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#64748b;flex-shrink:0;line-height:1}
+.modal-close:hover{background:#e2e8f0;color:#0f172a}
+.modal-section{padding:14px 18px;border-bottom:1px solid #f8fafc}
+.modal-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;margin-bottom:10px}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-stat{background:#f8fafc;border-radius:8px;padding:10px 12px}
+.modal-stat-n{font-size:25px;font-weight:800;line-height:1;margin-bottom:2px}
+.modal-stat-l{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#64748b}
+.modal-att-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.modal-att-bar{flex:1;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;margin-left:10px}
+.modal-att-fill{height:100%;border-radius:3px}
+.rep-link{cursor:pointer;color:#0f172a;text-decoration:none;border-bottom:1px dashed #cbd5e1}
+.rep-link:hover{color:#3b82f6;border-bottom-color:#3b82f6}
+
+/* ── SELLER SCORECARDS ── */
+.sc-section{margin-top:16px}
+.sc-section-hdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:8px}
+.sc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.sc-card{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e8f0}
+.sc-card-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.sc-rep-name{font-size:15px;font-weight:800;line-height:1.1}
+.sc-rep-team{font-size:10px;color:#94a3b8;margin-top:2px}
+.sc-tgt-lbl{font-size:10px;font-weight:600;color:#f59e0b;text-align:right;line-height:1.4}
+.sc-bars{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+.sc-bar-row{display:grid;grid-template-columns:90px 1fr auto auto;align-items:center;gap:7px}
+.sc-bar-lbl{font-size:11px;font-weight:600;color:#475569}
+.sc-bar-track{height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden}
+.sc-bar-fill{height:100%;border-radius:3px;transition:width .4s}
+.sc-bar-nums{font-size:10px;color:#64748b;white-space:nowrap}
+.sc-pct{font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;white-space:nowrap}
+.sc-pct-hi{background:#dcfce7;color:#16a34a}
+.sc-pct-ok{background:#fef9c3;color:#b45309}
+.sc-pct-lo{background:#fee2e2;color:#dc2626}
+.sc-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;border-top:1px solid #f1f5f9;padding-top:10px}
+.sc-stat{text-align:center;padding:2px 0}
+.sc-stat-n{font-size:19px;font-weight:900;color:#0f172a;line-height:1}
+.sc-stat-lbl{font-size:9px;color:#94a3b8;margin-top:3px;line-height:1.2}
+</style>
+</head>
+<body>
+
+<!-- REP SCORECARD MODAL -->
+<div class="modal-overlay" id="rep-modal" onclick="closeRepCard(event)">
+  <div class="modal-card" id="rep-modal-card">
+    <div class="modal-top">
+      <div>
+        <div class="modal-rep-name" id="modal-rep-name">—</div>
+        <div class="modal-rep-meta" id="modal-rep-meta">—</div>
+      </div>
+      <button class="modal-close" onclick="closeRepCard(null,true)">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- TITLE -->
+<div class="page-title" style="position:relative">
+  <div class="page-title-main">Home Services Sales Magic</div>
+  <div class="page-title-sub">Scorpion</div>
+  <button id="resync-btn" onclick="resync()" title="Refresh data" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s" onmouseover="this.style.background='#334155';this.style.color='#fff'" onmouseout="this.style.background='#1e293b';this.style.color='#94a3b8'">
+    <span id="resync-icon" style="display:inline-block;transition:transform .4s">↻</span> Resync
+  </button>
+</div>
+
+<!-- TAB NAV -->
+<div class="tab-nav">
+  <button class="tab active" data-tab="gm">GM Rollup</button>
+  <button class="tab" data-tab="activity">Activity</button>
+  <button class="tab" data-tab="compare">Comparison</button>
+  <button class="tab" data-tab="yearly">Yearly</button>
+  <button class="tab" data-tab="closed">Closed Deals</button>
+</div>
+
+<!-- SUB-FILTER BAR (shown for all tabs except Comparison) -->
+<div class="filter-bar" id="sub-filter-bar">
+  <div class="view-pills">
+    <button class="vpill" data-view="today">Today</button>
+    <button class="vpill" data-view="date">Date</button>
+    <button class="vpill active" data-view="week">This Week</button>
+    <button class="vpill" data-view="month">Month</button>
+    <button class="vpill" data-view="quarter">Quarter</button>
+    <button class="vpill" data-view="year">Year</button>
+  </div>
+
+  <div class="filter-sep" id="fsep-date" style="display:none"></div>
+  <div class="f-ctrl" id="date-filter" style="display:none">
+    <label>Date</label>
+    <input type="date" id="day-picker">
+  </div>
+
+  <div class="filter-sep" id="fsep-month" style="display:none"></div>
+  <div class="f-ctrl" id="month-filter" style="display:none">
+    <label>Month</label>
+    <input type="month" id="month-picker">
+  </div>
+
+  <div class="filter-sep" id="fsep-quarter" style="display:none"></div>
+  <div class="f-ctrl" id="quarter-filter" style="display:none">
+    <label>Quarter</label>
+    <select id="quarter-picker"></select>
+  </div>
+
+  <div class="filter-sep" id="fsep-year" style="display:none"></div>
+  <div class="f-ctrl" id="year-filter" style="display:none">
+    <label>Year</label>
+    <select id="year-picker"></select>
+  </div>
+
+  <div class="status-pill" id="status-act">Loading…</div>
+</div>
+
+<!-- COMPARE FILTER BAR (shown for Comparison tab only) -->
+<div class="filter-bar" id="cmp-filter-bar" style="display:none">
+  <div class="f-ctrl">
+    <label>Compare</label>
+    <select class="cmp-select" id="cmp-select">
+      <option value="wow">Week over week</option>
+      <option value="mtd">Month to date vs prior MTD</option>
+      <option value="mom">Month over month</option>
+      <option value="qoq">Quarter over quarter</option>
+    </select>
+  </div>
+  <div class="f-ctrl" id="cmp-month-wrap" style="display:none">
+    <label>Month</label>
+    <input type="month" id="cmp-month-picker">
+  </div>
+  <div class="cmp-range-lbl" id="cmp-range-lbl" style="display:none"></div>
+  <div class="status-pill" id="status-cmp">Loading…</div>
+</div>
+
+<!-- ── AUTH SCREEN ─────────────────────────────────────────────────────── -->
+<div id="auth-screen" style="display:none;position:fixed;inset:0;background:#0f172a;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px">
+  <div style="text-align:center">
+    <div style="font-size:48px;font-weight:900;color:#fff;letter-spacing:-1px">Home Services</div>
+    <div style="font-size:20px;color:#475569;margin-top:4px">Sales Dashboard</div>
+  </div>
+  <div style="background:#1e293b;border-radius:16px;padding:36px 44px;max-width:420px;width:90%;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.5)">
+    <div style="font-size:22px;font-weight:700;color:#fff;margin-bottom:8px">Connect to Salesforce</div>
+    <div style="font-size:15px;color:#64748b;margin-bottom:28px;line-height:1.5">Sign in with your Scorpion Salesforce account to view live pipeline and activity data.</div>
+    <button id="sf-login-btn" onclick="startAuth()" style="background:#007FFD;color:#fff;border:none;border-radius:10px;padding:14px 32px;font-size:17px;font-weight:700;cursor:pointer;width:100%;transition:background .15s" onmouseover="this.style.background='#0066cc'" onmouseout="this.style.background='#007FFD'">
+      Sign in with Salesforce
+    </button>
+    <div id="auth-error" style="display:none;margin-top:16px;padding:10px 14px;background:#7f1d1d;border-radius:8px;color:#fca5a5;font-size:14px"></div>
+    <div style="margin-top:20px;font-size:13px;color:#334155">Uses OAuth 2.0 — your credentials are never stored here.</div>
+  </div>
+</div>
+
+
+<div id="main">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div class="load-label">Fetching data…</div>
+    <div class="load-step" id="progress">Connecting to Salesforce…</div>
+    <div class="prog-bar"><div class="prog-fill" id="pbar" style="width:3%"></div></div>
+  </div>
+</div>
+
+<script>
+
+// ══════════════════════════════════════════════════════════════════════════
+// STANDALONE MODE — Salesforce OAuth 2.0 PKCE (no client secret)
+// ══════════════════════════════════════════════════════════════════════════
+// SETUP REQUIRED:
+//   1. In SF Setup → App Manager → create a Connected App:
+//        - Enable OAuth, add redirect_uri = URL of this file (e.g. your SharePoint page URL)
+//        - Selected OAuth Scopes: api, refresh_token (or "Full access")
+//        - Enable "Require Proof Key for Code Exchange (PKCE) Extension" if available
+//        - Set "Permitted Users" to "All users may self-authorize"
+//   2. Copy the Consumer Key (Client ID) into SF_CLIENT_ID below.
+//   3. In SF Setup → CORS → add your hosting URL (e.g. https://scorpion.sharepoint.com)
+//   4. In SF Setup → Trusted URLs → add your hosting URL.
+//   5. Host this file on SharePoint or any HTTPS server — file:// will NOT work.
+// ══════════════════════════════════════════════════════════════════════════
+
+const SF_CLIENT_ID    = '3MVG9p1Q1BCe9GmCMeHTy20BdsVb9AgOFO2AMpUQqke2NpyOXld1366HKyXoNhmasVKx5p_3FgCU.PfHNuIYk';
+const SF_LOGIN_URL    = 'https://scorpion.my.salesforce.com';
+const SF_REDIRECT_URI = 'https://joshsmith-cloud.github.io/scorpion-oauth-relay/';
+
+// ── Storage helpers (sessionStorage throws in sandboxed iframes) ─────────────
+const _mem={};
+function storSet(k,v){try{sessionStorage.setItem(k,v);}catch(e){_mem[k]=v;}}
+function storGet(k){try{return sessionStorage.getItem(k);}catch(e){return _mem[k]??null;}}
+function storDel(k){try{sessionStorage.removeItem(k);}catch(e){delete _mem[k];}}
+
+// ── PKCE helpers ────────────────────────────────────────────────────────────
+function _b64url(buf){
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+async function generatePKCE(){
+  const verifier=_b64url(crypto.getRandomValues(new Uint8Array(32)));
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier));
+  return{verifier,challenge:_b64url(digest)};
+}
+
+// ── Auth screen show/hide ────────────────────────────────────────────────────
+function showAuthScreen(errMsg){
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('main').style.display='none';
+  if(errMsg){
+    const e=document.getElementById('auth-error');
+    e.textContent=errMsg;e.style.display='block';
+  }
+}
+function hideAuthScreen(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('main').style.display='';
+}
+
+// ── Start OAuth Implicit flow ─────────────────────────────────────────────────
+// SF returns access_token directly in the URL hash — no token exchange fetch.
+// Requires Connected App: uncheck "Require Proof Key for Code Exchange (PKCE)".
+async function startAuth(){
+  const params=new URLSearchParams({
+    response_type:'token',
+    client_id:SF_CLIENT_ID,
+    redirect_uri:SF_REDIRECT_URI,
+    scope:'api',
+    state:crypto.randomUUID(),
+  });
+  window.location.href=`${SF_LOGIN_URL}/services/oauth2/authorize?${params}`;
+}
+
+// ── Resync: clear cache and reload all data ───────────────────────────────────
+function resync(){
+  // Clear all cached data
+  Object.keys(_activityCache).forEach(k=>delete _activityCache[k]);
+  Object.keys(_quotaCache).forEach(k=>delete _quotaCache[k]);
+  // Spin the icon
+  const icon=document.getElementById('resync-icon');
+  if(icon){
+    icon.style.transition='transform 0.8s linear';
+    icon.style.transform='rotate(360deg)';
+    setTimeout(()=>{icon.style.transition='none';icon.style.transform='rotate(0deg)';},850);
+  }
+  load();
+}
+
+// ── Sign out ─────────────────────────────────────────────────────────────────
+function signOut(){
+  storDel('sf_access_token');
+  storDel('sf_instance_url');
+  _sfInstanceUrl='';
+  showAuthScreen();
+}
+
+// ── Init: read token from URL hash (SF implicit redirect) or restore session ──
+async function initAuth(){
+  try{
+    const h=new URLSearchParams(window.location.hash.slice(1));
+    const tok=h.get('access_token');
+    const inst=h.get('instance_url');
+    const err=h.get('error_description')||h.get('error');
+    if(tok){
+      storSet('sf_access_token',tok);
+      const base=inst?decodeURIComponent(inst):'https://scorpion.lightning.force.com';
+      storSet('sf_instance_url',base);
+      _sfInstanceUrl=base;
+      try{history.replaceState(null,'',window.location.pathname);}catch(e){}
+      hideAuthScreen();load();return;
+    }
+    if(err){showAuthScreen(decodeURIComponent(err));return;}
+  }catch(e){}
+  if(storGet('sf_access_token')){
+    _sfInstanceUrl=storGet('sf_instance_url')||'https://scorpion.lightning.force.com';
+    hideAuthScreen();load();return;
+  }
+  showAuthScreen();
+}
+
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const T = { CALLS_DAY:60, CALLS_WEEK:300, EMAILS_DAY:35, EMAILS_WEEK:175, SETS_DAY:2, SETS_WEEK:10, CLOSES_MONTH:3 };
+
+const TEAMS = {
+  tippets:{name:'Team Tippets',manager:'Sarah Tippets',color:'#3b82f6',reps:[
+    {name:'Alec Frost',id:'0055f00000967B2AAI'},
+    {name:'Craig Woratyla',id:'005Jx000009NrUfIAK'},
+    {name:'Kyle Gearig',id:'005Rj0000004QbpIAE'},
+    {name:'Meg Van Leeuwen',id:'0055f00000AuOcvAAF'},
+    {name:'Nate Hicks',id:'005Jx000009Nr9hIAC'},
+    {name:'Omner Vera',id:'0055f000009VFZNAA4'},
+    {name:'Travis Carter',id:'0055f00000967B9AAI'}
+  ]},
+  saumell:{name:'Team Saumell',manager:'Damon Saumell',color:'#8b5cf6',reps:[
+    {name:'Aaron Doucet',id:'0055f00000967BIAAY'},
+    {name:'Andrew Frost',id:'0055f00000AWG5wAAH'},
+    {name:'Christian Dunwoody',id:'0055f00000967BFAAY'},
+    {name:'Christian Johner',id:'005Jx000008qlhNIAQ'},
+    {name:'Jaden Larsen',id:'0055f00000967BTAAY'},
+    {name:'Layne Compston',id:'005Rj00000GpYeNIAV'},
+
+    {name:'Michael Brown',id:'005Rj00000FnkfWIAR'},
+    {name:'Tristan Cirelo',id:'005Jx000009NoRxIAK'}
+  ]}
+};
+const ALL_REPS = [...TEAMS.tippets.reps,...TEAMS.saumell.reps];
+const ID_TEAM  = Object.fromEntries([
+  ...TEAMS.tippets.reps.map(r=>[r.id,'tippets']),
+  ...TEAMS.saumell.reps.map(r=>[r.id,'saumell'])
+]);
+const ALL_IDS  = ALL_REPS.map(r=>`'${r.id}'`).join(',');
+const CONN_DISPS = `'Answered - Not Interested','Answered - Follow Up','Answered - Meeting Set','Answered - Wrong Contact'`;
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const TEAM_QUOTA_MONTHLY=95000; // $95k per team per month — managers carry remainder
+// Scale quota to the selected time period: quarter = 3×, everything else = 1× (monthly)
+function quotaScale(){ return subView==='year'?12:subView==='quarter'?3:1; }
+function quotaPeriodLabel(){ return subView==='year'?'annual':subView==='quarter'?'quarterly':'monthly'; }
+const ID_NAME  = Object.fromEntries(ALL_REPS.map(r=>[r.id,r.name]));
+
+// Chart.js global font defaults
+if(typeof Chart!=='undefined'){
+  Chart.defaults.font.size=14;
+  Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+}
+
+// Latest activity date per opp (populated by fetchGMExtras, used by renderOppsRows)
+let _latestActMap={};
+
+let mainTab = 'gm';
+let _sfInstanceUrl = '';
+let _chartInstance = null;
+let subView = 'week'; // 'today' | 'date' | 'week' | 'month' | 'quarter' | 'year'
+let cmpMode = 'wow';
+let _repScoreData = {}; // repId → {rep, quota, range}
+let _repScoreRange = null;
+let _oppStageFilter = 'All'; // stage filter for top opps
+let _userTargets = {}; // repId → {callsDay, emailsWeek, setsWeek, heldWeek, oppsWeek} from SF User profile
+const _activityCache = {}; // key: cacheKey(range) → {ts, reps}
+const _quotaCache    = {}; // key: 'quota' → {ts, map, targets}
+const CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+function cacheKey(range){return `${range.start}|${range.end}|${subView}`;}
+function cacheGet(store, key){const e=store[key];return e&&(Date.now()-e.ts<CACHE_TTL)?e.data:null;}
+function cacheSet(store, key, data){store[key]={ts:Date.now(),data};}
+
+// ── INIT PICKERS ──────────────────────────────────────────────────────────────
+const _now  = new Date();
+const _y    = _now.getFullYear();
+const _m    = _now.getMonth()+1;
+document.getElementById('month-picker').value =
+  `${_y}-${String(_m).padStart(2,'0')}`;
+document.getElementById('cmp-month-picker').value =
+  `${_y}-${String(_m).padStart(2,'0')}`;
+
+(function(){
+  const sel = document.getElementById('quarter-picker');
+  const cq  = Math.floor((_m-1)/3);
+  const opts = [];
+  for(let back=3;back>=-1;back--){
+    let q=cq-back, y=_y;
+    while(q<0){q+=4;y--;}
+    while(q>3){q-=4;y++;}
+    const qS=['Jan','Apr','Jul','Oct'][q];
+    const qE=['Mar','Jun','Sep','Dec'][q];
+    opts.push(`<option value="${y}-Q${q+1}" ${back===0?'selected':''}>Q${q+1} ${y} (${qS}–${qE})</option>`);
+  }
+  sel.innerHTML = opts.join('');
+})();
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+const tod    = ()=>new Date().toISOString().slice(0,10);
+const fmtMRR = v=>v>=1e6?`$${(v/1e6).toFixed(1)}M`:v>=1000?`$${(v/1000).toFixed(1)}k`:`$${Math.round(v)}`;
+const pct    = (n,d)=>d>0?Math.round(n/d*100):0;
+const fmtD   = s=>{if(!s)return '';const[,m,d]=s.split('-');return `${MONTHS[+m-1]} ${+d}`;};
+function workdays(a,b){
+  let d=new Date(a+'T12:00:00'),e=new Date(b+'T12:00:00'),n=0;
+  while(d<=e){const w=d.getDay();if(w&&w<6)n++;d.setDate(d.getDate()+1);}
+  return n;
+}
+function prog(msg,step,total){
+  const el=document.getElementById('progress'),pb=document.getElementById('pbar');
+  if(el)el.textContent=msg;
+  if(pb)pb.style.width=`${Math.round((step/total)*100)}%`;
+}
+function sumR(reps){
+  return reps.reduce((a,r)=>({
+    dials:    a.dials+(r.dials||0),
+    emails:   a.emails+(r.emails||0),
+    connects: a.connects+(r.connects||0),
+    disc:     a.disc+(r.disc||0),
+    held:     a.held+(r.held||0),
+    mSched:   a.mSched+(r.mSched||0),
+    props:    a.props+(r.props||0),
+    pMRR:     a.pMRR+(r.pMRR||0),
+    fcst:     a.fcst+(r.fcst||0),
+    fMRR:     a.fMRR+(r.fMRR||0),
+    won:      a.won+(r.won||0),
+    wMRR:     a.wMRR+(r.wMRR||0),
+    lost:     a.lost+(r.lost||0),
+    dpMRR:    a.dpMRR+(r.dpMRR||0),
+    dpCnt:    a.dpCnt+(r.dpCnt||0),
+  }),{dials:0,emails:0,connects:0,disc:0,held:0,mSched:0,props:0,pMRR:0,fcst:0,fMRR:0,won:0,wMRR:0,lost:0,dpMRR:0,dpCnt:0});
+}
+async function sf(q){
+  const token=storGet('sf_access_token');
+  if(!token){showAuthScreen();throw new Error('Not authenticated');}
+  const base=storGet('sf_instance_url')||'https://scorpion.lightning.force.com';
+  let records=[];
+  let url=`${base}/services/data/v64.0/query?q=${encodeURIComponent(q)}`;
+  while(url){
+    const resp=await fetch(url,{headers:{Authorization:`Bearer ${token}`,Accept:'application/json'}});
+    if(resp.status===401){signOut();throw new Error('SF session expired — please sign in again');}
+    if(!resp.ok){const t=await resp.text();throw new Error(`SF API error ${resp.status}: ${t.slice(0,300)}`);}
+    const d=await resp.json();
+    records=records.concat(d.records||[]);
+    url=d.nextRecordsUrl?`${base}${d.nextRecordsUrl}`:null;
+  }
+  return records;
+}
+function toMap(recs,ownerKey,valKey){
+  const m={};
+  for(const r of recs){
+    const id=r[ownerKey];
+    if(id&&ID_TEAM[id]!==undefined)m[id]=(m[id]||0)+(r[valKey]||0);
+  }
+  return m;
+}
+function setStatus(txt){
+  const id = mainTab==='compare'?'status-cmp':'status-act';
+  const el = document.getElementById(id);
+  if(el)el.textContent=txt;
+}
+
+// ── DATE RANGES ───────────────────────────────────────────────────────────────
+function getRange(){
+  const t=tod();
+  if(subView==='today'){
+    return{start:t,end:t,label:`Today, ${fmtD(t)}`,sub:'1 day',wd:1,daysIn:1};
+  }
+  if(subView==='date'){
+    const pv=document.getElementById('day-picker')?.value||t;
+    const chosen=pv||t;
+    const d=new Date(chosen+'T12:00:00'),dow=d.getDay();
+    const isWd=dow>0&&dow<6;
+    return{start:chosen,end:chosen,label:fmtD(chosen),sub:isWd?'1 workday':'Weekend',wd:1,daysIn:1};
+  }
+  if(subView==='week'){
+    const d=new Date(t+'T12:00:00'),dow=d.getDay();
+    const diff=dow===0?6:dow-1;
+    const mon=new Date(d);mon.setDate(d.getDate()-diff);
+    const ms=mon.toISOString().slice(0,10);
+    const daysIn=Math.min(Math.max(diff,1),5);
+    return{start:ms,end:t,label:`Week of ${fmtD(ms)}`,sub:`${daysIn} of 5 workdays`,wd:daysIn,daysIn};
+  }
+  if(subView==='month'){
+    const mv=document.getElementById('month-picker').value;
+    const[y,m]=mv.split('-').map(Number);
+    const start=`${y}-${String(m).padStart(2,'0')}-01`;
+    let end=new Date(y,m,0).toISOString().slice(0,10);
+    if(end>t)end=t;
+    const wd=workdays(start,end);
+    return{start,end,label:`${MONTHS[m-1]} ${y}`,sub:`${wd} workdays`,wd};
+  }
+  if(subView==='quarter'){
+    const qv=document.getElementById('quarter-picker').value;
+    const[qy,qn]=qv.split('-');
+    const qi=parseInt(qn[1])-1;
+    const qS=[0,3,6,9];
+    const start=`${qy}-${String(qS[qi]+1).padStart(2,'0')}-01`;
+    let end=new Date(parseInt(qy),qS[qi]+3,0).toISOString().slice(0,10);
+    if(end>t)end=t;
+    const wd=workdays(start,end);
+    return{start,end,label:`Q${qi+1} ${qy}`,sub:`${wd} workdays`,wd};
+  }
+  if(subView==='year'){
+    const yv=document.getElementById('year-picker')?.value||String(new Date().getFullYear());
+    const y=parseInt(yv);
+    const start=`${y}-01-01`;
+    let end=`${y}-12-31`;
+    if(end>t)end=t;
+    const wd=workdays(start,end);
+    return{start,end,label:`Year ${y}`,sub:`${wd} workdays`,wd};
+  }
+}
+
+// ── COMPARE RANGES ────────────────────────────────────────────────────────────
+function getCmpRanges(){
+  const t=tod();
+  const fmt=dt=>dt.toISOString().slice(0,10);
+  if(cmpMode==='wow'){
+    const d=new Date(t+'T12:00:00'),dow=d.getDay();
+    const diff=dow===0?6:dow-1;
+    const thisMon=new Date(d);thisMon.setDate(d.getDate()-diff);
+    const lastSun=new Date(thisMon);lastSun.setDate(thisMon.getDate()-1);
+    const lastMon=new Date(lastSun);lastMon.setDate(lastSun.getDate()-6);
+    const aS=fmt(thisMon),bS=fmt(lastMon),bE=fmt(lastSun);
+    return{a:{start:aS,end:t,label:`${fmtD(aS)}–${fmtD(t)}`,sub:'This week'},
+           b:{start:bS,end:bE,label:`${fmtD(bS)}–${fmtD(bE)}`,sub:'Last week'}};
+  }
+  if(cmpMode==='mtd'){
+    const d=new Date(t+'T12:00:00');
+    const y=d.getFullYear(),m=d.getMonth()+1,day=d.getDate();
+    const aS=`${y}-${String(m).padStart(2,'0')}-01`;
+    const pm=m===1?12:m-1,py=m===1?y-1:y;
+    const lpd=new Date(py,pm,0).getDate(),cap=Math.min(day,lpd);
+    const bS=`${py}-${String(pm).padStart(2,'0')}-01`;
+    const bE=`${py}-${String(pm).padStart(2,'0')}-${String(cap).padStart(2,'0')}`;
+    return{a:{start:aS,end:t,label:`${MONTHS[m-1]} 1–${day}`,sub:'Month to date'},
+           b:{start:bS,end:bE,label:`${MONTHS[pm-1]} 1–${cap}`,sub:'Prior month same period'}};
+  }
+  if(cmpMode==='mom'){
+    const mv=document.getElementById('cmp-month-picker').value||`${_y}-${String(_m).padStart(2,'0')}`;
+    const[y,m]=mv.split('-').map(Number);
+    const aS=`${y}-${String(m).padStart(2,'0')}-01`;
+    let aE=new Date(y,m,0).toISOString().slice(0,10);
+    if(aE>t)aE=t;
+    const pm=m===1?12:m-1,py=m===1?y-1:y;
+    const bS=`${py}-${String(pm).padStart(2,'0')}-01`;
+    const bE=new Date(py,pm,0).toISOString().slice(0,10);
+    return{a:{start:aS,end:aE,label:`${MONTHS[m-1]} ${y}`,sub:'Selected month'},
+           b:{start:bS,end:bE,label:`${MONTHS[pm-1]} ${py}`,sub:'Prior month'}};
+  }
+  if(cmpMode==='qoq'){
+    const d=new Date(t+'T12:00:00');
+    const y=d.getFullYear(),mo=d.getMonth();
+    const cq=Math.floor(mo/3),qS=[0,3,6,9],QN=['Q1','Q2','Q3','Q4'];
+    const aS=`${y}-${String(qS[cq]+1).padStart(2,'0')}-01`;
+    const pq=(cq+3)%4,pqy=cq===0?y-1:y;
+    const bS=`${pqy}-${String(qS[pq]+1).padStart(2,'0')}-01`;
+    const bE=new Date(pqy,qS[pq]+3,0).toISOString().slice(0,10);
+    return{a:{start:aS,end:t,label:`${QN[cq]} ${y}`,sub:'Current quarter'},
+           b:{start:bS,end:bE,label:`${QN[pq]} ${pqy}`,sub:'Prior quarter'}};
+  }
+}
+function updateCmpRangeLabel(){
+  const r=getCmpRanges();if(!r)return;
+  const el=document.getElementById('cmp-range-lbl');
+  el.style.display='flex';
+  el.innerHTML=`<span class="cmp-period-pill">${r.a.label}</span><span class="cmp-vs">vs</span><span class="cmp-period-pill" style="color:#94a3b8">${r.b.label}</span>`;
+}
+
+// ── LOAD DISPATCHER ───────────────────────────────────────────────────────────
+async function load(){
+  if(mainTab==='compare'){await loadCompare();return;}
+  if(mainTab==='gm'){await loadGM();return;}
+  if(mainTab==='yearly'){await loadYearly();return;}
+  if(mainTab==='closed'){await loadClosed();return;}
+  await loadActivity();
+}
+
+// ── SHARED DATA FETCH ─────────────────────────────────────────────────────────
+async function fetchActivity(range){
+  const ck=cacheKey(range);
+  const hit=cacheGet(_activityCache,ck);
+  if(hit){prog('Loaded from cache',1,1);return hit;}
+  const{start,end}=range;
+
+  // Pipeline queries use CloseDate filtering. Close dates are FUTURE-facing, so
+  // we never cap pipeEnd at today — a rep closing a deal Friday should appear
+  // in this week's pipeline even if today is Monday.
+  // Activity queries (dials, sets, won, held) keep the exact selected range (capped at today).
+  const isDay=subView==='today'||subView==='date';
+  let pipeStart=start,pipeEnd=end;
+  if(isDay){
+    // Expand single-day views to Mon–Sun of that week (no today cap)
+    const d=new Date(start+'T12:00:00');
+    const dow=d.getDay(),diff=dow===0?6:dow-1;
+    const mon=new Date(d);mon.setDate(d.getDate()-diff);
+    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+    pipeStart=mon.toISOString().slice(0,10);
+    pipeEnd=sun.toISOString().slice(0,10);
+  } else if(subView==='week'){
+    // Use full Mon–Sun of the selected week (not capped at today)
+    const d=new Date(start+'T12:00:00');
+    const dow=d.getDay(),diff=dow===0?6:dow-1;
+    const sun=new Date(d);sun.setDate(d.getDate()+(6-diff));
+    pipeEnd=sun.toISOString().slice(0,10);
+  } else if(subView==='month'){
+    // Use last day of the selected month (not capped at today)
+    const[y,m]=start.split('-').map(Number);
+    pipeEnd=new Date(y,m,0).toISOString().slice(0,10);
+  } else if(subView==='quarter'){
+    // Use last day of the quarter (not capped at today)
+    const[y,mo]=start.split('-').map(Number);
+    pipeEnd=new Date(y,mo+2,0).toISOString().slice(0,10);
+  } else if(subView==='year'){
+    pipeEnd=`${start.slice(0,4)}-12-31`;
+  }
+
+  // ── Batch 1: activity queries ─────────────────────────────────────────────────
+  // Dials + connects merged into one query (split by CallDisposition in JS)
+  // Includes TaskSubtype='Call' (dialer) + TaskSubtype='Task' with Type='Call'/'Manual Call' (manual logs)
+  // Manual call records typically have no CallDisposition → counted as dials only, not connects
+  prog('Calls… 1/8',1,8);
+  const callRecs=await sf(`SELECT OwnerId,CallDisposition,COUNT(Id) total FROM Task WHERE (TaskSubtype='Call' OR (TaskSubtype='Task' AND Type IN ('Call','Manual Call'))) AND OwnerId IN (${ALL_IDS}) AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z GROUP BY OwnerId,CallDisposition`);
+
+  prog('Emails… 2/8',2,8);
+  const emailRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Task WHERE TaskSubtype='Email' AND OwnerId IN (${ALL_IDS}) AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z GROUP BY OwnerId`);
+
+  // mSched + held merged into one query (split by Outcome__c in JS)
+  prog('Meetings… 3/8',3,8);
+  const meetRecs=await sf(`SELECT OwnerId,Outcome__c,COUNT(Id) cnt FROM Event WHERE OwnerId IN (${ALL_IDS}) AND Type='Meeting' AND ActivityDate>=${start} AND ActivityDate<=${end} GROUP BY OwnerId,Outcome__c`);
+
+  prog('1SEO filter… 4/8',4,8);
+  const seoAll=await sf(`SELECT Id FROM Opportunity WHERE OwnerId IN ('0055f00000AWG5wAAH','005Rj00000GpYeNIAV') AND Name LIKE '%1SEO%'`).catch(()=>[]);
+  // Aggregate calls: total dials = all call tasks; connects = those with connect dispositions
+  const CONN_SET=new Set(['Answered - Not Interested','Answered - Follow Up','Answered - Meeting Set','Answered - Wrong Contact']);
+  const dialMap={},connMap={};
+  for(const r of callRecs){
+    const o=r.OwnerId,n=r.total||0;
+    dialMap[o]=(dialMap[o]||0)+n;
+    if(CONN_SET.has(r.CallDisposition))connMap[o]=(connMap[o]||0)+n;
+  }
+  const emailMap=toMap(emailRecs,'OwnerId','total');
+  // Aggregate meetings: mSched = all meetings; held = Outcome__c='Completed'
+  const mSchedMap={},heldMap={};
+  for(const r of meetRecs){
+    const o=r.OwnerId,n=r.cnt||0;
+    mSchedMap[o]=(mSchedMap[o]||0)+n;
+    if(r.Outcome__c==='Completed')heldMap[o]=(heldMap[o]||0)+n;
+  }
+
+  // Build 1SEO exclusion clause from pre-fetch result
+  let seoExclude='';
+  if(seoAll.length>0){
+    const ids=seoAll.map(r=>`'${r.Id}'`).join(',');
+    seoExclude=` AND Id NOT IN (${ids})`;
+  }
+
+  // ── Batch 2: opp queries that depend on seoExclude ───────────────────────────
+  prog('Sets… 5/8',5,8);
+  const discRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Opportunity WHERE OwnerId IN (${ALL_IDS}) AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z${seoExclude} GROUP BY OwnerId`);
+
+  prog('Pipeline… 6/8',6,8);
+  const pipeRecs=await sf(`SELECT OwnerId,StageName,COUNT(Id) total,SUM(Net_MRR__c) mrr FROM Opportunity WHERE StageName IN ('Discovery','Proposal','Forecast') AND IsClosed=false AND CloseDate>=${pipeStart} AND CloseDate<=${pipeEnd} AND OwnerId IN (${ALL_IDS})${seoExclude} GROUP BY OwnerId,StageName`);
+
+  prog('Won… 7/8',7,8);
+  const wonRecs=await sf(`SELECT OwnerId,COUNT(Id) total,SUM(Monthly_Recurring_Revenue__c) mrr FROM Opportunity WHERE IsWon=true AND CloseDate>=${start} AND CloseDate<=${end} AND OwnerId IN (${ALL_IDS})${seoExclude} GROUP BY OwnerId`);
+
+  prog('Lost… 8/8',8,8);
+  const lostRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Opportunity WHERE IsClosed=true AND IsWon=false AND CloseDate>=${start} AND CloseDate<=${end} AND OwnerId IN (${ALL_IDS})${seoExclude} GROUP BY OwnerId`);
+  const discMap=toMap(discRecs,'OwnerId','total');
+  const propCnt={},propMRR={},fcstCnt={},fcstMRR={},dpMRRmap={},dpCntmap={};
+  for(const r of pipeRecs){
+    if(!ID_TEAM[r.OwnerId])continue;
+    if(r.StageName==='Discovery'){dpMRRmap[r.OwnerId]=(dpMRRmap[r.OwnerId]||0)+(r.mrr||0);dpCntmap[r.OwnerId]=(dpCntmap[r.OwnerId]||0)+(r.total||0);}
+    else if(r.StageName==='Proposal'){propCnt[r.OwnerId]=(propCnt[r.OwnerId]||0)+(r.total||0);propMRR[r.OwnerId]=(propMRR[r.OwnerId]||0)+(r.mrr||0);}
+    else{fcstCnt[r.OwnerId]=(fcstCnt[r.OwnerId]||0)+(r.total||0);fcstMRR[r.OwnerId]=(fcstMRR[r.OwnerId]||0)+(r.mrr||0);}
+  }
+  const wonCnt=toMap(wonRecs,'OwnerId','total');
+  const wonMRR=toMap(wonRecs,'OwnerId','mrr');
+  const lostMap=toMap(lostRecs,'OwnerId','total');
+
+  const result=ALL_REPS.map(r=>{
+    const dials=dialMap[r.id]||0,emails=emailMap[r.id]||0,connects=connMap[r.id]||0,disc=discMap[r.id]||0;
+    const props=propCnt[r.id]||0,pMRR=propMRR[r.id]||0;
+    const fcst=fcstCnt[r.id]||0,fMRR=fcstMRR[r.id]||0;
+    const won=wonCnt[r.id]||0,wMRR=wonMRR[r.id]||0,lost=lostMap[r.id]||0;
+    const held=heldMap[r.id]||0,mSched=mSchedMap[r.id]||0;
+    return{id:r.id,name:r.name,team:ID_TEAM[r.id],
+      dials,emails,connects,disc,held,mSched,props,pMRR,fcst,fMRR,won,wMRR,lost,
+      dpMRR:dpMRRmap[r.id]||0,
+      dpCnt:dpCntmap[r.id]||0,
+      connPct:pct(connects,dials),discPct:pct(disc,connects),holdPct:pct(held,mSched),winPct:pct(won,won+lost)};
+  });
+  cacheSet(_activityCache,ck,result);
+  return result;
+}
+
+// ── GM EXTRAS FETCH ───────────────────────────────────────────────────────────
+async function fetchGMExtras(){
+  // 7: SF instance URL (cached for session)
+  prog('SF instance… 7/10',7,10);
+  if(!_sfInstanceUrl){
+    _sfInstanceUrl=storGet('sf_instance_url')||'https://scorpion.lightning.force.com';
+  }
+
+  // 8: Top open opportunities (with primary contact via subquery)
+  prog('Top opportunities… 8/10',8,10);
+  // Top opps: fetch more than needed, filter 1SEO in JS (SOQL can't do NOT LIKE)
+  const _SEO_OWN=['0055f00000AWG5wAAH','005Rj00000GpYeNIAV'];
+  const _filterSeo=arr=>arr.filter(o=>!(_SEO_OWN.includes(o.OwnerId)&&o.Name&&o.Name.includes('1SEO')));
+  let topOpps=[];
+  try{
+    const raw=await sf(`SELECT Id,Name,StageName,Monthly_Recurring_Revenue__c,LastActivityDate,CreatedDate,OwnerId,(SELECT Contact.Name FROM OpportunityContactRoles WHERE IsPrimary=true LIMIT 1) FROM Opportunity WHERE IsClosed=false AND OwnerId IN (${ALL_IDS}) ORDER BY Monthly_Recurring_Revenue__c DESC NULLS LAST LIMIT 50`);
+    topOpps=_filterSeo(raw).slice(0,25);
+  }catch(e){
+    // Fallback without contact subquery
+    try{
+      const raw2=await sf(`SELECT Id,Name,StageName,Monthly_Recurring_Revenue__c,LastActivityDate,CreatedDate,OwnerId FROM Opportunity WHERE IsClosed=false AND OwnerId IN (${ALL_IDS}) ORDER BY Monthly_Recurring_Revenue__c DESC NULLS LAST LIMIT 50`);
+      topOpps=_filterSeo(raw2).slice(0,25);
+    }catch(e2){}
+  }
+
+  // 8b: Last activity date per opp — use Opportunity.LastActivityDate (SF roll-up field, always current)
+  // MAX(ActivityDate) is not supported in SOQL aggregate queries on Date fields.
+  _latestActMap={};
+  topOpps.forEach(o=>{if(o.LastActivityDate)_latestActMap[o.Id]=o.LastActivityDate;});
+
+  // 9: Quota — $95k per team per month, scaled to selected period (quarter = 3×)
+  prog('Quota data… 9/11',9,11);
+  const quotaTotal=TEAM_QUOTA_MONTHLY*2*quotaScale();
+
+  // 10: Pre-launch cancels — accounts that flipped to 'Canceled Client' but never reached 'Customer'
+  prog('Pre-launch cancels… 10/11',10,11);
+  let cancelledMRR=0;
+  let preLaunchCancelCount=0;
+  try{
+    const range=getRange();
+    const{start,end}=range;
+    // Pull all Status__c transitions to 'Canceled Client' in the period (org-wide — filtered to HS in step 11)
+    const histRecs=await sf(`SELECT AccountId,OldValue,NewValue FROM AccountHistory WHERE Field='Status__c' AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z`);
+    // Pre-launch = went to Canceled Client but OldValue was NOT 'Customer' (never went live)
+    const preLaunchIds=[...new Set(
+      histRecs
+        .filter(r=>r.NewValue==='Canceled Client'&&r.OldValue!=='Customer')
+        .map(r=>r.AccountId)
+        .filter(Boolean)
+    )];
+
+    // 11: Look up MRR from Closed Won HS rep opps only — scopes both count and $ to our team
+    prog('Pre-launch MRR… 11/11',11,11);
+    if(preLaunchIds.length>0){
+      const idList=preLaunchIds.map(id=>`'${id}'`).join(',');
+      // OwnerId IN (ALL_IDS) filters to HS reps only — excludes all other teams in the org
+      const mrrRecs=await sf(`SELECT AccountId,SUM(Monthly_Recurring_Revenue__c) mrr FROM Opportunity WHERE IsWon=true AND AccountId IN (${idList}) AND OwnerId IN (${ALL_IDS}) GROUP BY AccountId`);
+      // Count = only accounts where HS reps actually had a won deal (ignore $0 and non-HS accounts)
+      const hsRecs=mrrRecs.filter(r=>(r.mrr||0)>0);
+      preLaunchCancelCount=hsRecs.length;
+      cancelledMRR=hsRecs.reduce((s,r)=>s+(r.mrr||0),0);
+    }
+  }catch(e){}
+
+  return{topOpps,quotaTotal,cancelledMRR,preLaunchCancelCount};
+}
+
+// ── QUOTA + ACTIVITY TARGETS FETCH (from SF User profile) ────────────────────
+async function fetchQuotaData(){
+  const hit=cacheGet(_quotaCache,'quota');
+  if(hit){Object.assign(_userTargets,hit.targets);return hit.map;}
+  try{
+    const qr=await sf(`SELECT Id,Quota_MRR__c,Quota_Units__c,Calls_Per_Day__c,Target_Emails_Per_Week__c,Appointments_Set_Per_Week__c,Appointments_Held_Per_Week__c,Opportunities_Created_Per_Week__c FROM User WHERE Id IN (${ALL_IDS})`);
+    const mrrMap={},targets={};
+    for(const r of qr){
+      if(r.Id){
+        mrrMap[r.Id]=r.Quota_MRR__c||0;
+        targets[r.Id]={
+          callsDay:  r.Calls_Per_Day__c               ||T.CALLS_DAY,
+          emailsWeek:r.Target_Emails_Per_Week__c       ||T.EMAILS_WEEK,
+          setsWeek:  r.Appointments_Set_Per_Week__c    ||T.SETS_WEEK,
+          heldWeek:  r.Appointments_Held_Per_Week__c   ||null,
+          oppsWeek:  r.Opportunities_Created_Per_Week__c||null,
+        };
+      }
+    }
+    Object.assign(_userTargets,targets);
+    cacheSet(_quotaCache,'quota',{map:mrrMap,targets});
+    return mrrMap;
+  }catch(e){return {};}
+}
+
+// ── ACTIVITY TAB ──────────────────────────────────────────────────────────────
+async function loadActivity(){
+  const range=getRange();
+  document.getElementById('main').innerHTML=`<div class="loading"><div class="spinner"></div><div class="load-label">${range.label}</div><div class="load-step" id="progress">Connecting…</div><div class="prog-bar"><div class="prog-fill" id="pbar" style="width:3%"></div></div></div>`;
+  setStatus('Loading…');
+  try{
+    if(!_sfInstanceUrl){
+      _sfInstanceUrl=storGet('sf_instance_url')||'https://scorpion.lightning.force.com';
+    }
+    const reps=await fetchActivity(range);
+    let quotaMap={};
+    try{quotaMap=await fetchQuotaData();}catch(e){}
+    // Merge per-rep activity targets from SF User profile into each rep object
+    reps.forEach(r=>{
+      const ut=_userTargets[r.id]||{};
+      r.callsDay  = ut.callsDay  ||T.CALLS_DAY;
+      r.emailsWeek= ut.emailsWeek||T.EMAILS_WEEK;
+      r.setsWeek  = ut.setsWeek  ||T.SETS_WEEK;
+      r.heldWeek  = ut.heldWeek  ||null;
+      r.oppsWeek  = ut.oppsWeek  ||null;
+    });
+    render(range,reps,quotaMap);
+  }catch(err){
+    document.getElementById('main').innerHTML=`<div class="err">⚠️ ${err.message||err}</div>`;
+  }
+  setStatus(new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+}
+
+function render(range,reps,quotaMap={}){
+  const t=sumR(reps);
+  const d2connRate = pct(t.connects,t.dials);
+  const conn2sRate = pct(t.disc,t.connects);
+  const s2cRate    = pct(t.won,t.disc);
+  const d2cRate    = pct(t.won,t.dials);
+  document.getElementById('main').innerHTML=`
+    <div class="main">
+      ${kpiHTML(t,d2connRate,conn2sRate,s2cRate,d2cRate)}
+      ${funnelHTML(t)}
+      ${tableAreaHTML(range,reps,quotaMap)}
+      ${pipelineOverviewHTML(reps,t)}
+      ${sellerScorecardsHTML(reps,range)}
+    </div>`;
+}
+
+// ── GM ROLLUP TAB ─────────────────────────────────────────────────────────────
+async function loadGM(){
+  const range=getRange();
+  document.getElementById('main').innerHTML=`<div class="loading"><div class="spinner"></div><div class="load-label">GM Rollup — ${range.label}</div><div class="load-step" id="progress">Connecting…</div><div class="prog-bar"><div class="prog-fill" id="pbar" style="width:3%"></div></div></div>`;
+  setStatus('Loading…');
+  try{
+    const reps=await fetchActivity(range);
+    const extras=await fetchGMExtras();
+    renderGM(range,reps,extras);
+  }catch(err){
+    document.getElementById('main').innerHTML=`<div class="err">⚠️ ${err.message||err}</div>`;
+  }
+  setStatus(new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+}
+
+function renderGM(range,reps,extras={}){
+  const isWeek = subView==='week';
+  const isDayGM = subView==='today'||subView==='date';
+  const tipReps=reps.filter(r=>r.team==='tippets');
+  const sauReps=reps.filter(r=>r.team==='saumell');
+  const tT=sumR(tipReps), tS=sumR(sauReps), tAll=sumR(reps);
+  const{topOpps=[],quotaTotal=0,cancelledMRR=0,preLaunchCancelCount=0}=extras;
+
+  function pacingBadge(dials,rCount){
+    const tgt = isWeek ? T.CALLS_WEEK*rCount : isDayGM ? T.CALLS_DAY*rCount : T.CALLS_DAY*range.wd*rCount;
+    if(!tgt)return '';
+    const p=dials/tgt;
+    const cls=p>=1.05?'pace-a':p>=0.8?'pace-o':'pace-b';
+    const lbl=p>=1.05?'↑ Ahead':p>=0.8?'✓ On pace':'↓ Behind';
+    return `<span class="pace-badge ${cls}">${lbl} ${Math.round(p*100)}%</span>`;
+  }
+
+  function gmTeamCard(cfg,t,repsList){
+    const connR=pct(t.connects,t.dials);
+    const pipeMRR=t.pMRR+t.fMRR;
+    const rpd=t.dials>0&&t.wMRR>0?'$'+Math.round(t.wMRR/t.dials):'—';
+    const dialTgt = isWeek ? T.CALLS_WEEK*repsList.length : isDayGM ? T.CALLS_DAY*repsList.length : T.CALLS_DAY*range.wd*repsList.length;
+    const discTgt = isWeek ? T.SETS_WEEK*repsList.length  : isDayGM ? T.SETS_DAY*repsList.length  : T.SETS_DAY*range.wd*repsList.length;
+    return `<div class="gm-card">
+      <div class="gm-card-hdr">
+        <div class="t-dot" style="background:${cfg.color}"></div>
+        <div class="gm-card-title">${cfg.name}</div>
+        <div class="gm-card-mgr">${cfg.manager} · ${repsList.length} reps</div>
+      </div>
+      <div class="gm-metrics-row">
+        <div class="gm-m tip" data-tip="Total outbound calls · target ${dialTgt.toLocaleString()}">
+          <div class="gm-m-n">${t.dials.toLocaleString()}</div>
+          <div class="gm-m-l">Dials</div>
+          <div class="gm-m-sub">tgt ${dialTgt.toLocaleString()}</div>
+        </div>
+        <div class="gm-m tip" data-tip="New opportunities entered Discovery · target ${discTgt}">
+          <div class="gm-m-n" style="color:#f59e0b">${t.disc}</div>
+          <div class="gm-m-l">Sets</div>
+          <div class="gm-m-sub">tgt ${discTgt}</div>
+        </div>
+        <div class="gm-m tip" data-tip="Meetings held (Outcome = Completed) · hold rate ${t.mSched>0?Math.round(t.held/t.mSched*100)+'%':'—'}">
+          <div class="gm-m-n" style="color:#a78bfa">${t.held||'—'}</div>
+          <div class="gm-m-l">Held</div>
+          <div class="gm-m-sub">${t.mSched>0?Math.round(t.held/t.mSched*100)+'% hold':' '}</div>
+        </div>
+        <div class="gm-m tip" data-tip="Closed Won deals in this period">
+          <div class="gm-m-n" style="color:#3b82f6">${t.won||'—'}</div>
+          <div class="gm-m-l">Won</div>
+          <div class="gm-m-sub">${t.won>0?fmtMRR(t.wMRR/t.won)+' avg':' '}</div>
+        </div>
+        <div class="gm-m tip" data-tip="MRR from Closed Won deals in this period">
+          <div class="gm-m-n" style="color:#10b981">${t.wMRR>0?fmtMRR(t.wMRR):'—'}</div>
+          <div class="gm-m-l">Won MRR</div>
+          <div class="gm-m-sub">${t.won} deal${t.won!==1?'s':''}</div>
+        </div>
+      </div>
+      <div class="gm-pace-row">
+        <span class="gm-pace-lbl">Dial pace:</span>
+        ${pacingBadge(t.dials,repsList.length)}
+        <span style="margin-left:auto;font-size:10px;color:#64748b">
+          Pipeline: <strong style="color:#0f172a">${pipeMRR>0?fmtMRR(pipeMRR):'—'}</strong>
+          &nbsp;·&nbsp; $/Dial: <strong style="color:#3b82f6">${rpd}</strong>
+        </span>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('main').innerHTML=`
+    <div class="main">
+      ${gmKPIBarHTML(tAll,reps,quotaTotal,cancelledMRR,preLaunchCancelCount)}
+      <div class="gm-period-bar">
+        <div><span class="gm-period-lbl">${range.label}</span><span class="gm-period-sub">${range.sub}</span></div>
+        <div class="gm-totals">
+          <div class="gm-tot-item"><div class="gm-tot-l">Combined Dials</div><div class="gm-tot-v">${tAll.dials.toLocaleString()}</div></div>
+          <div class="gm-tot-item"><div class="gm-tot-l">Combined Won MRR</div><div class="gm-tot-v green">${tAll.wMRR>0?fmtMRR(tAll.wMRR):'—'}</div></div>
+          <div class="gm-tot-item"><div class="gm-tot-l">Total Open Pipeline</div><div class="gm-tot-v">${(tAll.pMRR+tAll.fMRR+tAll.dpMRR)>0?fmtMRR(tAll.pMRR+tAll.fMRR+tAll.dpMRR):'—'}</div></div>
+        </div>
+      </div>
+      <div class="gm-teams-grid">
+        ${gmTeamCard(TEAMS.tippets,tT,tipReps)}
+        ${gmTeamCard(TEAMS.saumell,tS,sauReps)}
+      </div>
+      ${pipelineChartHTML()}
+      ${gmSummaryTable(tT,tS,tAll)}
+      ${topOppsHTML(topOpps)}
+    </div>`;
+
+  // Initialize chart after DOM update
+  setTimeout(()=>initPipelineChart(tAll.dpMRR,tAll.pMRR,tAll.fMRR,tAll.wMRR,tAll.dpCnt,tAll.props,tAll.fcst,tAll.won),50);
+}
+
+// ── GM KPI BAR ────────────────────────────────────────────────────────────────
+function gmKPIBarHTML(tAll,reps,quotaTotal,cancelledMRR,preLaunchCancelCount){
+  const activeSellers=reps.filter(r=>r.dials>0).length;
+  const openPipeline=tAll.pMRR+tAll.fMRR+tAll.dpMRR;
+  const netMRR=cancelledMRR>0?tAll.wMRR-cancelledMRR:null;
+  const goalPct=quotaTotal>0?Math.round(tAll.wMRR/quotaTotal*100):null;
+  const quotaGap=quotaTotal>0?quotaTotal-tAll.wMRR:null;
+
+  const goalColor=goalPct===null?'#94a3b8':goalPct>=100?'#10b981':goalPct>=75?'#f59e0b':'#ef4444';
+  const gapColor=quotaGap===null?'#94a3b8':quotaGap<=0?'#10b981':'#ef4444';
+
+  function kpitile(label,value,sub,color,tip){
+    return `<div class="gm-kpi-tile tip" data-tip="${tip}">
+      <div class="gm-kpi-n" style="color:${color}">${value}</div>
+      <div class="gm-kpi-l">${label}</div>
+      ${sub?`<div class="gm-kpi-sub">${sub}</div>`:''}
+    </div>`;
+  }
+
+  return `<div class="gm-kpi-bar">
+    ${kpitile('% Goal Attainment',
+      goalPct!==null?goalPct+'%':'—',
+      quotaTotal>0?`of ${fmtMRR(quotaTotal)} ${quotaPeriodLabel()} quota`:'No quota in SF',
+      goalColor,
+      `Won MRR vs ${quotaPeriodLabel()} quota ($${(TEAM_QUOTA_MONTHLY*quotaScale()).toLocaleString()} per team). Quarter view scales to 3× monthly.`)}
+    ${kpitile('Gross MRR Sold',
+      fmtMRR(tAll.wMRR),
+      `${tAll.won} deal${tAll.won!==1?'s':''} closed`,
+      '#10b981',
+      'Total Monthly Recurring Revenue from all Closed Won deals in this period')}
+    ${kpitile('Net MRR Sold',
+      netMRR!==null?fmtMRR(netMRR):'—',
+      cancelledMRR>0?`minus ${fmtMRR(cancelledMRR)} (${preLaunchCancelCount} pre-launch cancel${preLaunchCancelCount!==1?'s':''})`:preLaunchCancelCount===0?'No pre-launch cancels':'Churn not tracked',
+      netMRR!==null?(netMRR<0?'#ef4444':'#10b981'):'#94a3b8',
+      'Gross MRR minus MRR from accounts that cancelled before going live (pre-launch cancels only)')}
+    ${kpitile('Quota Gap',
+      quotaGap!==null?(quotaGap<=0?'+'+fmtMRR(Math.abs(quotaGap)):fmtMRR(quotaGap)):'—',
+      quotaGap!==null?(quotaGap<=0?'Above quota':'Remaining to quota'):'No quota in SF',
+      gapColor,
+      `${quotaPeriodLabel().charAt(0).toUpperCase()+quotaPeriodLabel().slice(1)} quota minus Won MRR. Green = above quota. Red = still needs to close.`)}
+    ${kpitile('Open Pipeline',
+      openPipeline>0?fmtMRR(openPipeline):'—',
+      `${tAll.props+tAll.fcst} Proposal/Forecast opps`,
+      '#3b82f6',
+      'Sum of MRR across all open Discovery, Proposal, and Forecast opportunities (no date filter)')}
+    ${kpitile('Active Sellers',
+      activeSellers,
+      `of ${reps.length} total`,
+      activeSellers===reps.length?'#10b981':activeSellers>=Math.ceil(reps.length*.8)?'#f59e0b':'#ef4444',
+      'Number of sellers who logged at least 1 dial in this period')}
+  </div>`;
+}
+
+// ── PIPELINE STAGE CHART ──────────────────────────────────────────────────────
+function pipelineChartHTML(){
+  return `<div class="chart-card">
+    <div class="chart-card-hdr">
+      <span class="chart-card-title">Pipeline by Stage (MRR)</span>
+      <span style="font-size:9px;color:#94a3b8">Discovery · Proposal · Forecast = current open &nbsp;|&nbsp; Closed Won = period</span>
+    </div>
+    <div class="chart-container">
+      <canvas id="pipeline-chart"></canvas>
+    </div>
+  </div>`;
+}
+
+function initPipelineChart(dpMRR,pMRR,fMRR,wMRR,dpCnt,propCnt,fcstCnt,wonCnt){
+  if(_chartInstance){try{_chartInstance.destroy();}catch(e){} _chartInstance=null;}
+  const canvas=document.getElementById('pipeline-chart');
+  if(!canvas||typeof Chart==='undefined')return;
+  const ctx=canvas.getContext('2d');
+  const mrrs=[dpMRR,pMRR,fMRR,wMRR];
+  const units=[dpCnt||0,propCnt||0,fcstCnt||0,wonCnt||0];
+  const barLabelPlugin={
+    id:'barLabels',
+    afterDatasetsDraw(chart){
+      const c=chart.ctx;
+      chart.getDatasetMeta(0).data.forEach((bar,i)=>{
+        const mrr=mrrs[i]||0, u=units[i]||0;
+        const avg=u>0?Math.round(mrr/u):0;
+        if(!mrr&&!u)return;
+        const lines=[fmtMRR(mrr), `${u} unit${u!==1?'s':''}`, avg>0?`${fmtMRR(avg)}/unit`:''].filter(Boolean);
+        const x=bar.x, baseY=bar.y-10;
+        c.save();
+        c.textAlign='center';
+        c.font='bold 13px -apple-system,sans-serif';
+        c.fillStyle='#334155';
+        lines.forEach((line,li)=>{
+          c.fillText(line, x, baseY-(lines.length-1-li)*17);
+        });
+        c.restore();
+      });
+    }
+  };
+  _chartInstance=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:['Discovery (open)','Proposal (open)','Forecast (open)','Closed Won (period)'],
+      datasets:[{
+        data:[dpMRR,pMRR,fMRR,wMRR],
+        backgroundColor:['rgba(245,158,11,0.12)','rgba(59,130,246,0.12)','rgba(139,92,246,0.12)','rgba(16,185,129,0.12)'],
+        borderColor:['#f59e0b','#3b82f6','#8b5cf6','#10b981'],
+        borderWidth:2,
+        borderRadius:6,
+        borderSkipped:false,
+      }]
+    },
+    plugins:[barLabelPlugin],
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      layout:{padding:{top:52}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>' '+fmtMRR(ctx.raw)}}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:13},color:'#64748b'}},
+        y:{
+          grid:{color:'rgba(241,245,249,1)'},
+          ticks:{callback:v=>fmtMRR(v),font:{size:13},color:'#64748b'},
+          beginAtZero:true
+        }
+      }
+    }
+  });
+}
+
+// ── TOP OPEN OPPORTUNITIES ────────────────────────────────────────────────────
+let _allTopOpps = [];
+
+function stageBadge(s){
+  const cls=s==='Discovery'?'stage-disc':s==='Proposal'?'stage-prop':s==='Forecast'?'stage-fcst':s==='Closed Won'?'stage-won':'stage-other';
+  return `<span class="stage-badge ${cls}">${s||'—'}</span>`;
+}
+
+function renderOppsRows(opps){
+  function fmtDate(d){
+    if(!d)return `<span class="dim">—</span>`;
+    const p=d.split('-');
+    return p.length===3?`${p[1]}/${p[2]}`:'—';
+  }
+  function daysSince(iso){
+    if(!iso)return null;
+    const ms=Date.now()-new Date(iso.slice(0,10)+'T12:00:00').getTime();
+    return Math.max(0,Math.floor(ms/86400000));
+  }
+  function ageBadge(days){
+    if(days===null)return `<span class="dim">—</span>`;
+    const color=days<=14?'#10b981':days<=30?'#f59e0b':'#ef4444';
+    return `<span style="font-size:11px;font-weight:700;color:${color}">${days}d</span>`;
+  }
+  const filtered=_oppStageFilter==='All'?opps:opps.filter(r=>r.StageName===_oppStageFilter);
+  if(!filtered.length)return `<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px;font-size:11px">No opportunities match this filter</td></tr>`;
+  return filtered.map(r=>{
+    const contactName=r.OpportunityContactRoles?.records?.[0]?.Contact?.Name||null;
+    const sellerName=ID_NAME[r.OwnerId]||'—';
+    const mrr=r.Monthly_Recurring_Revenue__c||0;
+    const sfLink=_sfInstanceUrl?`${_sfInstanceUrl}/lightning/r/Opportunity/${r.Id}/view`:'#';
+    const daysOpen=daysSince(r.CreatedDate||null);
+    return `<tr>
+      <td style="min-width:180px">
+        <a class="opp-link" href="${sfLink}" target="_blank" rel="noopener">${r.Name||'—'}</a>
+        ${contactName?`<div style="font-size:10px;color:#94a3b8;margin-top:2px">${contactName}</div>`:''}
+      </td>
+      <td style="color:#334155;font-size:11px;white-space:nowrap">${sellerName}</td>
+      <td style="text-align:center">${ageBadge(daysOpen)}</td>
+      <td style="text-align:center">${stageBadge(r.StageName)}</td>
+      <td class="mrr" style="text-align:right">${mrr>0?fmtMRR(mrr):'—'}</td>
+      <td style="font-size:11px;color:#64748b;text-align:right;padding-right:14px">${fmtDate(_latestActMap[r.Id]||r.LastActivityDate)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function setOppFilter(stage){
+  _oppStageFilter=stage;
+  // update pill active states
+  document.querySelectorAll('.osp').forEach(p=>{
+    p.classList.toggle('active',p.dataset.stage===stage);
+  });
+  // re-render just the tbody
+  const tb=document.getElementById('opps-tbody');
+  if(tb)tb.innerHTML=renderOppsRows(_allTopOpps);
+}
+
+function topOppsHTML(opps){
+  if(!opps||opps.length===0)return '';
+  _allTopOpps=opps;
+  const stages=[...new Set(opps.map(r=>r.StageName).filter(Boolean))];
+  const pills=['All',...stages].map(s=>{
+    const fc=s==='Discovery'?'disc-f':s==='Proposal'?'prop-f':s==='Forecast'?'fcst-f':'';
+    return `<button class="osp ${fc}${s===_oppStageFilter?' active':''}" data-stage="${s}" onclick="setOppFilter('${s}')">${s}</button>`;
+  }).join('');
+  return `<div class="opps-card">
+    <div class="opps-hdr">
+      <span class="opps-title">Top Open Opportunities</span>
+      <div class="opp-stage-pills">${pills}</div>
+    </div>
+    <div class="tw"><table>
+      <thead><tr>
+        <th style="text-align:left">Opportunity · Contact</th>
+        <th style="text-align:left">Rep</th>
+        <th class="tip" data-tip="Days since opportunity was created in Salesforce">Age</th>
+        <th>Stage</th>
+        <th>MRR</th>
+        <th class="tip" data-tip="Most recent date across all Tasks and Events on this opportunity (open + closed)">Last Action</th>
+      </tr></thead>
+      <tbody id="opps-tbody">${renderOppsRows(opps)}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function gmSummaryTable(tT,tS,tAll){
+  const isWeek=subView==='week';
+  const isDaySum=subView==='today'||subView==='date';
+  const rows=[
+    {lbl:'Dials',tT:tT.dials.toLocaleString(),tS:tS.dials.toLocaleString(),tot:tAll.dials.toLocaleString()},
+    {lbl:'Connects',tT:tT.connects,tS:tS.connects,tot:tAll.connects},
+    {lbl:'Conn%',tT:pct(tT.connects,tT.dials)+'%',tS:pct(tS.connects,tS.dials)+'%',tot:pct(tAll.connects,tAll.dials)+'%'},
+    {lbl:'Discoveries',tT:tT.disc,tS:tS.disc,tot:tAll.disc},
+    {lbl:'Held Meetings',tT:tT.held||0,tS:tS.held||0,tot:tAll.held||0},
+    {lbl:'Hold Rate',tT:pct(tT.held,tT.disc)+'%',tS:pct(tS.held,tS.disc)+'%',tot:pct(tAll.held,tAll.disc)+'%'},
+    {sep:true},
+    {lbl:'Open Proposals',tT:`${tT.props}${tT.pMRR>0?' ('+fmtMRR(tT.pMRR)+')':''}`,tS:`${tS.props}${tS.pMRR>0?' ('+fmtMRR(tS.pMRR)+')':''}`,tot:`${tAll.props}${tAll.pMRR>0?' ('+fmtMRR(tAll.pMRR)+')':''}`},
+    {lbl:'Forecast',tT:`${tT.fcst}${tT.fMRR>0?' ('+fmtMRR(tT.fMRR)+')':''}`,tS:`${tS.fcst}${tS.fMRR>0?' ('+fmtMRR(tS.fMRR)+')':''}`,tot:`${tAll.fcst}${tAll.fMRR>0?' ('+fmtMRR(tAll.fMRR)+')':''}`},
+    {lbl:'Pipeline MRR',tT:(tT.pMRR+tT.fMRR)>0?fmtMRR(tT.pMRR+tT.fMRR):'—',tS:(tS.pMRR+tS.fMRR)>0?fmtMRR(tS.pMRR+tS.fMRR):'—',tot:(tAll.pMRR+tAll.fMRR)>0?fmtMRR(tAll.pMRR+tAll.fMRR):'—',bold:true},
+    {sep:true},
+    {lbl:'Closed Won',tT:tT.won,tS:tS.won,tot:tAll.won},
+    {lbl:'Won MRR',tT:tT.wMRR>0?fmtMRR(tT.wMRR):'—',tS:tS.wMRR>0?fmtMRR(tS.wMRR):'—',tot:tAll.wMRR>0?fmtMRR(tAll.wMRR):'—',bold:true,green:true},
+    {lbl:'Win Rate',tT:pct(tT.won,tT.won+tT.lost)+'%',tS:pct(tS.won,tS.won+tS.lost)+'%',tot:pct(tAll.won,tAll.won+tAll.lost)+'%'},
+    {lbl:'$/Dial',tT:tT.dials>0&&tT.wMRR>0?'$'+Math.round(tT.wMRR/tT.dials):'—',tS:tS.dials>0&&tS.wMRR>0?'$'+Math.round(tS.wMRR/tS.dials):'—',tot:tAll.dials>0&&tAll.wMRR>0?'$'+Math.round(tAll.wMRR/tAll.dials):'—'},
+  ];
+  return `<div class="gm-pipeline-card">
+    <div style="padding:10px 14px;border-bottom:1px solid #f1f5f9">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#64748b">Team Summary</span>
+    </div>
+    <div class="tw"><table>
+      <thead><tr>
+        <th style="text-align:left">Metric</th>
+        <th style="color:#3b82f6">Team Tippets</th>
+        <th style="color:#8b5cf6">Team Saumell</th>
+        <th>Combined</th>
+      </tr></thead>
+      <tbody>${rows.map(r=>r.sep
+        ?`<tr style="background:#f8fafc"><td colspan="4" style="padding:3px 14px;border-top:1px solid #e2e8f0"> </td></tr>`
+        :`<tr>
+          <td style="font-size:11px;color:#64748b;font-weight:600">${r.lbl}</td>
+          <td style="${r.bold?'font-weight:700;':''}${r.green?'color:#10b981':'color:#0f172a'}">${r.tT}</td>
+          <td style="${r.bold?'font-weight:700;':''}${r.green?'color:#10b981':'color:#0f172a'}">${r.tS}</td>
+          <td style="${r.bold?'font-weight:800;':'font-weight:600;'}${r.green?'color:#10b981':'color:#0f172a'}">${r.tot}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+// ── KPI TILES ─────────────────────────────────────────────────────────────────
+function kpiHTML(t,d2connRate,conn2sRate,s2cRate,d2cRate){
+  return `<div class="kpi-row">
+    <div class="kpi-tile tip" data-tip="% of dials that resulted in a live conversation · ${t.connects} connects from ${t.dials.toLocaleString()} dials">
+      <div class="kpi-n" style="color:#06b6d4">${d2connRate}%</div>
+      <div class="kpi-lbl">Dials → Connects</div>
+      <div class="kpi-sub">${t.dials.toLocaleString()} dials / ${t.connects} connects</div>
+    </div>
+    <div class="kpi-tile tip" data-tip="% of connects that resulted in a new Discovery (set) · ${t.disc} sets from ${t.connects} connects">
+      <div class="kpi-n" style="color:#f59e0b">${conn2sRate}%</div>
+      <div class="kpi-lbl">Connects → Sets</div>
+      <div class="kpi-sub">${t.connects} connects / ${t.disc} sets</div>
+    </div>
+    <div class="kpi-tile tip" data-tip="% of Discoveries that closed won · ${t.won} wins from ${t.disc} sets">
+      <div class="kpi-n kpi-c2c">${s2cRate}%</div>
+      <div class="kpi-lbl">Sets → Close</div>
+      <div class="kpi-sub">${t.disc} sets / ${t.won} wins</div>
+    </div>
+    <div class="kpi-tile tip" data-tip="% of all dials that ended in a closed won deal · ${t.won} wins from ${t.dials.toLocaleString()} dials">
+      <div class="kpi-n kpi-d2c">${d2cRate}%</div>
+      <div class="kpi-lbl">Dials → Close</div>
+      <div class="kpi-sub">${t.dials.toLocaleString()} dials / ${t.won} wins</div>
+    </div>
+  </div>`;
+}
+
+// ── FUNNEL ROW ────────────────────────────────────────────────────────────────
+function funnelHTML(t){
+  const cP=pct(t.connects,t.dials),dP=pct(t.disc,t.connects);
+  const pP=pct(t.props,t.disc),wP=pct(t.won,t.won+t.lost);
+  const pc=v=>v>=20?'#10b981':v>=10?'#f59e0b':v>0?'#ef4444':'#cbd5e1';
+  const stages=[
+    {n:t.dials.toLocaleString(),lbl:'Dials',rate:'',rc:'',tip:'Total outbound calls logged in Outreach (TaskSubtype = Call)'},
+    {n:t.connects.toLocaleString(),lbl:'Connects',rate:cP?`${cP}% of dials`:'',rc:pc(cP),tip:'Calls where a conversation occurred (Answered dispositions)'},
+    {n:t.disc.toLocaleString(),lbl:'Discoveries',rate:dP?`${dP}% of connects`:'',rc:pc(dP),tip:'Opportunities created in Discovery stage during this period'},
+    {n:t.props.toLocaleString(),lbl:'Proposals',rate:pP?`${pP}% adv`:'',rc:pc(pP),mrr:(t.pMRR||0)>0?fmtMRR(t.pMRR)+' open':'',tip:'Open opportunities currently in Proposal stage (no date filter — current state)'},
+    {n:t.fcst.toLocaleString(),lbl:'Forecast',rate:'',rc:'',mrr:(t.fMRR||0)>0?fmtMRR(t.fMRR)+' open':'',tip:'Open opportunities currently in Forecast stage (no date filter — current state)'},
+    {n:t.won.toLocaleString(),lbl:'Closed Won',rate:wP?`${wP}% win rate`:'',rc:pc(wP),mrr:t.wMRR>0?fmtMRR(t.wMRR):'',tip:'Closed Won deals with close date in this period'},
+  ];
+  return `<div class="funnel-row">${stages.map(s=>`
+    <div class="f-stage tip" data-tip="${s.tip}">
+      <div class="f-n">${s.n}</div>
+      <div class="f-lbl">${s.lbl}</div>
+      ${s.rate?`<div class="f-rate" style="color:${s.rc}">${s.rate}</div>`:''}
+      ${s.mrr?`<div class="f-mrr">${s.mrr}</div>`:''}
+    </div>`).join('')}</div>`;
+}
+
+// ── ATTAINMENT BAR CELL ──────────────────────────────────────────────────────
+function attBarHTML(att){
+  if(att===null)return `<span class="dim">—</span>`;
+  const color=att>=100?'#10b981':att>=75?'#f59e0b':'#ef4444';
+  const cls=att>=100?'hi':att>=75?'mid':'lo';
+  const w=Math.min(att,100);
+  return `<div class="att-cell">
+    <span class="pct ${cls}">${att}%</span>
+    <div class="att-bar"><div class="att-fill" style="width:${w}%;background:${color}"></div></div>
+  </div>`;
+}
+
+// ── REP SCORECARD MODAL ──────────────────────────────────────────────────────
+function sfOppLink(repId, stage, periodStart){
+  const base=_sfInstanceUrl||'https://scorpion.lightning.force.com';
+  let filters;
+  if(stage==='won'){
+    filters=[
+      {field:'OwnerId',op:'eq',val:repId},
+      {field:'IsWon',op:'eq',val:'true'},
+      {field:'CloseDate',op:'gte',val:periodStart||'2026-01-01'}
+    ];
+  }else{
+    filters=[
+      {field:'OwnerId',op:'eq',val:repId},
+      {field:'StageName',op:'eq',val:stage},
+      {field:'IsClosed',op:'eq',val:'false'}
+    ];
+  }
+  return `${base}/lightning/o/Opportunity/list?filterName=__Recent&additionalFilters=${encodeURIComponent(JSON.stringify(filters))}`;
+}
+
+function openRepCard(repId){
+  const d=_repScoreData[repId];
+  if(!d)return;
+  const{r,quota,range}=d;
+  const teamCfg=TEAMS[r.team];
+  const att=quota>0?Math.round(r.wMRR/quota*100):null;
+  const attColor=att===null?'#94a3b8':att>=100?'#10b981':att>=75?'#f59e0b':'#ef4444';
+  const cP=pct(r.connects,r.dials),dP=pct(r.disc,r.connects);
+  const rpd=r.dials>0&&r.wMRR>0?'$'+Math.round(r.wMRR/r.dials):'—';
+  const winRate=pct(r.won,r.won+(r.lost||0));
+  const periodStart=range?.start||'2026-01-01';
+
+  document.getElementById('modal-rep-name').textContent=r.name;
+  document.getElementById('modal-rep-meta').textContent=
+    `${teamCfg?.name||r.team} · ${range?.label||'—'}`;
+
+  const stat=(val,lbl,color='#0f172a')=>
+    `<div class="modal-stat">
+      <div class="modal-stat-n" style="color:${color}">${val}</div>
+      <div class="modal-stat-l">${lbl}</div>
+    </div>`;
+
+  const statLink=(val,lbl,color,url)=>
+    `<div class="modal-stat">
+      <a href="${url}" target="_blank" rel="noopener" style="text-decoration:none">
+        <div class="modal-stat-n" style="color:${color};text-decoration:underline;text-decoration-color:${color}40;cursor:pointer">${val}</div>
+        <div class="modal-stat-l" style="color:#3b82f6;font-size:9px">↗ view in SF</div>
+      </a>
+      <div class="modal-stat-l">${lbl}</div>
+    </div>`;
+
+  document.getElementById('modal-body').innerHTML=`
+    <div class="modal-section">
+      <div class="modal-section-title">Activity</div>
+      <div class="modal-grid">
+        ${stat(r.dials.toLocaleString(),'Dials','#0f172a')}
+        ${stat(r.connects,'Connects','#3b82f6')}
+        ${stat(cP?cP+'%':'—','Connect Rate',cP>=15?'#10b981':cP>=8?'#f59e0b':'#ef4444')}
+        ${stat(r.disc,'Discoveries','#8b5cf6')}
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Pipeline</div>
+      <div class="modal-grid">
+        ${statLink(r.props||0,'Open Proposals','#1d4ed8',sfOppLink(r.id,'Proposal',periodStart))}
+        ${statLink(r.fcst||0,'Forecast','#6d28d9',sfOppLink(r.id,'Forecast',periodStart))}
+        ${statLink(r.won||0,'Closed Won',r.won>=T.CLOSES_MONTH?'#10b981':r.won>0?'#f59e0b':'#ef4444',sfOppLink(r.id,'won',periodStart))}
+        ${stat(winRate?winRate+'%':'—','Win Rate','#64748b')}
+      </div>
+    </div>
+    <div class="modal-section" style="border-bottom:none">
+      <div class="modal-section-title">Revenue</div>
+      <div class="modal-grid">
+        ${stat(r.wMRR>0?fmtMRR(r.wMRR):'—','Gross MRR Closed','#10b981')}
+        ${stat(quota>0?fmtMRR(quota):'—','Quota (monthly)','#64748b')}
+        ${stat(rpd,'Revenue per Dial','#3b82f6')}
+        <div class="modal-stat">
+          <div class="modal-stat-n" style="color:${attColor}">${att!==null?att+'%':'—'}</div>
+          <div class="modal-stat-l">Quota Attainment</div>
+          ${att!==null?`<div class="modal-att-row">
+            <div class="modal-att-bar"><div class="modal-att-fill" style="width:${Math.min(att,100)}%;background:${attColor}"></div></div>
+          </div>`:''}
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('rep-modal').classList.add('open');
+}
+
+function closeRepCard(e,force){
+  if(force||!e||e.target===document.getElementById('rep-modal')){
+    document.getElementById('rep-modal').classList.remove('open');
+  }
+}
+
+// ── TABLE AREA (accordion) ────────────────────────────────────────────────────
+function tableAreaHTML(range,reps,quotaMap={}){
+  const isDay=subView==='today'||subView==='date';
+  const isShort=subView==='week'||isDay;
+  // Derive dial/email targets from SF User profile (fall back to T config)
+  const _sampleTgt=(reps.length>0&&_userTargets[reps[0].id])||{};
+  const sfCallsDay =_sampleTgt.callsDay  ||T.CALLS_DAY;
+  const sfEmailsWk =_sampleTgt.emailsWeek||T.EMAILS_WEEK;
+  const sfEmailsDay=Math.round(sfEmailsWk/5);
+  const dialTgt =isDay?sfCallsDay  :sfCallsDay*5;
+  const emailTgt=isDay?sfEmailsDay :sfEmailsWk;
+  const setsTgt=isDay?T.SETS_DAY:T.SETS_WEEK;
+  const tT=sumR(reps.filter(r=>r.team==='tippets'));
+  const tS=sumR(reps.filter(r=>r.team==='saumell'));
+  const tAll=sumR(reps);
+  const tipSorted=[...reps.filter(r=>r.team==='tippets')].sort((a,b)=>b.dials-a.dials);
+  const sauSorted=[...reps.filter(r=>r.team==='saumell')].sort((a,b)=>b.dials-a.dials);
+  const allQuota=TEAM_QUOTA_MONTHLY*2*quotaScale(); // scaled to period
+  const allAtt=allQuota>0?Math.round(tAll.wMRR/allQuota*100):null;
+  // store range for scorecard modal
+  _repScoreRange=range;
+
+  function th(label,tip,sub){
+    return `<th class="tip" data-tip="${tip}">${label}${sub?`<span class="th-s">${sub}</span>`:''}</th>`;
+  }
+
+  const hdr = isShort
+    ? `<th style="text-align:left" class="tip" data-tip="Seller name — click to open rep scorecard">Team / Seller</th>
+       ${th('Dials',`Total outbound calls logged this period. Target: ${dialTgt}/rep (from SF profile)`,`tgt: ${dialTgt}`)}
+       ${th('Emails',`Outbound emails sent this period. Target: ${emailTgt}/rep (from SF profile)`,`tgt: ${emailTgt}`)}
+       ${th('Sets',`Discovery meetings / opportunities set. Target: ${setsTgt}/rep`,`tgt: ${setsTgt}`)}
+       ${th('Held','Meetings held in this period: Events with Type=Meeting and Outcome=Completed, where ActivityDate falls in the selected range')}
+       ${th('Hold%','Held ÷ meetings on the calendar in this period (not ÷ sets). Both numerator and denominator use ActivityDate in range.')}
+       ${th('Proposal',`Open opps in Proposal stage (CloseDate in period${isDay?' — expanded to current week for single-day views':''})`,'wk min')}
+       ${th('Forecast',`Open opps in Forecast stage (CloseDate in period${isDay?' — expanded to current week for single-day views':''})`,'wk min')}
+       ${th('Pipeline $',`Total open pipeline MRR across Discovery + Proposal + Forecast (CloseDate in period${isDay?' — expanded to current week for single-day views':''}). Excludes 1SEO opps for Frost and Compston.`,'wk min')}
+       ${th('Won','Closed Won deals in this period')}
+       ${th('Gross MRR','Total Monthly Recurring Revenue from Closed Won deals in this period')}
+       ${th('Quota','Monthly MRR quota from the rep\'s Salesforce user profile','monthly')}
+       ${th('Attainment','Gross MRR ÷ monthly quota. Green ≥100%, Yellow ≥75%, Red <75%')}`
+    : `<th style="text-align:left" class="tip" data-tip="Seller name — click to open rep scorecard">Team / Seller</th>
+       ${th('Dials','Total outbound calls logged this period (TaskSubtype = Call)')}
+       ${th('Emails','Outbound emails sent this period (TaskSubtype = Email)')}
+       ${th('Connects','Calls with a live conversation (Answered - any disposition)')}
+       ${th('Sets','Opportunities created in Discovery stage during this period')}
+       ${th('Set%','% of live connects that resulted in a Discovery / meeting set')}
+       ${th('Held','Meetings held in this period: Events with Type=Meeting and Outcome=Completed, where ActivityDate falls in the selected range')}
+       ${th('Hold%','Held ÷ meetings on the calendar in this period (not ÷ sets). Both numerator and denominator use ActivityDate in range.')}
+       ${th('Proposal','Open opps in Proposal stage with CloseDate in period. Minimum weekly view — single-day picker expands to current week.','wk min')}
+       ${th('Forecast','Open opps in Forecast stage with CloseDate in period. Minimum weekly view — single-day picker expands to current week.','wk min')}
+       ${th('Pipeline $','Total open pipeline MRR across Discovery + Proposal + Forecast (CloseDate in period). Minimum weekly view for single-day pickers. Excludes 1SEO opps for Frost and Compston.','wk min')}
+       ${th('Won','Closed Won deals with close date in this period')}
+       ${th('Gross MRR','Total Monthly Recurring Revenue from Closed Won deals')}
+       ${th('Quota','Monthly MRR quota from the rep\'s Salesforce user profile','monthly')}
+       ${th('Attainment','Gross MRR ÷ monthly quota. Green ≥100%, Yellow ≥75%, Red <75%')}`;
+
+  return `<div class="table-card">
+    <div class="table-hdr">
+      <div class="table-hdr-left">
+        <div>
+          <div class="t-name">All Teams</div>
+          <div class="t-mgr">${range.label} · ${range.sub} · Click a team row to expand reps</div>
+        </div>
+      </div>
+      <div class="t-stats">
+        <div><div class="t-stat-l">Total Dials</div><div class="t-stat-v">${tAll.dials.toLocaleString()}</div></div>
+        <div><div class="t-stat-l">Gross MRR</div><div class="t-stat-v green">${tAll.wMRR>0?fmtMRR(tAll.wMRR):'—'}</div></div>
+        ${allQuota>0?`<div><div class="t-stat-l">Quota (mo.)</div><div class="t-stat-v">${fmtMRR(allQuota)}</div></div>`:''}
+        ${allAtt!==null?`<div><div class="t-stat-l">Attainment</div><div class="t-stat-v" style="color:${allAtt>=100?'#10b981':allAtt>=75?'#f59e0b':'#ef4444'}">${allAtt}%</div></div>`:''}
+      </div>
+    </div>
+    <div class="tw"><table>
+      <thead><tr>${hdr}</tr></thead>
+      <tbody>
+        ${accTeamBlock('tippets',TEAMS.tippets,tT,tipSorted,isShort,isDay,dialTgt,setsTgt,quotaMap)}
+        ${accTeamBlock('saumell',TEAMS.saumell,tS,sauSorted,isShort,isDay,dialTgt,setsTgt,quotaMap)}
+        ${combinedTotRow(tAll,isShort,allQuota)}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+function accTeamBlock(teamKey,cfg,t,sortedReps,isShort,isDay,dialTgt,setsTgt,quotaMap={}){
+  const cP=pct(t.connects,t.dials),dP=pct(t.disc,t.connects);
+  const rpd=t.dials>0&&t.wMRR>0?'$'+Math.round(t.wMRR/t.dials):'—';
+  const tQuota=TEAM_QUOTA_MONTHLY*quotaScale(); // scaled to period
+  const tAtt=tQuota>0?Math.round(t.wMRR/tQuota*100):null;
+  const toggle=`<span class="acc-toggle" id="acc-toggle-${teamKey}">&#9654;</span>`;
+
+  let teamRowCells, repRowsFn;
+  if(isShort){
+    const tHoldPct=pct(t.held,t.mSched);
+    // Team-level dial/email targets = sum of per-rep SF profile values
+    const teamDialTgt=cfg.reps.reduce((s,id)=>{const ut=_userTargets[id]||{};const cd=ut.callsDay||T.CALLS_DAY;return s+(isDay?cd:cd*5);},0);
+    const teamEmailTgt=cfg.reps.reduce((s,id)=>{const ut=_userTargets[id]||{};const ew=ut.emailsWeek||T.EMAILS_WEEK;return s+(isDay?Math.round(ew/5):ew);},0);
+    const tPipeCnt=(t.props||0)+(t.fcst||0)+(t.dpCnt||0);
+    teamRowCells=`
+      <td>${toggle}${cfg.name}</td>
+      ${wcCell(t.dials,teamDialTgt)}
+      ${wcCell(t.emails,teamEmailTgt)}
+      ${wcCell(t.disc,setsTgt*cfg.reps.length)}
+      <td>${t.held>0?`<span class="num">${t.held}</span>`:`<span class="dim">—</span>`}</td>
+      <td><span class="pct ${pcc(tHoldPct,70,50)}">${tHoldPct?tHoldPct+'%':'—'}</span></td>
+      <td>${t.props>0?`<span class="num">${t.props}</span>`:`<span class="dim">—</span>`}</td>
+      <td>${t.fcst>0?`<span class="num">${t.fcst}</span>`:`<span class="dim">—</span>`}</td>
+      <td>${(t.pMRR+t.fMRR+t.dpMRR)>0?`<span style="color:#f59e0b;font-weight:700;font-size:11px">${fmtMRR(t.pMRR+t.fMRR+t.dpMRR)}</span>${tPipeCnt>0?`<div style="font-size:10px;color:#94a3b8;margin-top:1px">${tPipeCnt} deals</div>`:''}`:`<span class="dim">—</span>`}</td>
+      <td><span class="pct ${t.won>0?'hi':'dim'}">${t.won||'—'}</span></td>
+      <td>${t.wMRR>0?`<span class="mrr">${fmtMRR(t.wMRR)}</span>`:`<span class="dim">—</span>`}</td>
+      <td>${tQuota>0?`<span class="num">${fmtMRR(tQuota)}</span>`:`<span class="dim">—</span>`}</td>
+      <td>${attBarHTML(tAtt)}</td>`;
+    repRowsFn = r=>{
+      const rc=pct(r.connects,r.dials);
+      const rHoldPct=pct(r.held||0,r.mSched||0);
+      const rd=r.dials>0&&r.wMRR>0?'$'+Math.round(r.wMRR/r.dials):'—';
+      const rQ=quotaMap[r.id]||0;
+      const rAtt=rQ>0?Math.round(r.wMRR/rQ*100):null;
+      // Per-rep targets from SF User profile
+      const _rut=_userTargets[r.id]||{};
+      const rCallsDay=_rut.callsDay||T.CALLS_DAY;
+      const rEmailsWk=_rut.emailsWeek||T.EMAILS_WEEK;
+      const rDialTgt=isDay?rCallsDay:rCallsDay*5;
+      const rEmailTgt=isDay?Math.round(rEmailsWk/5):rEmailsWk;
+      const rPipeCnt=(r.props||0)+(r.fcst||0)+(r.dpCnt||0);
+      _repScoreData[r.id]={r,quota:rQ,range:_repScoreRange};
+      return `<tr class="acc-rep-row" data-team="${teamKey}">
+        <td><span class="rep-link" onclick="openRepCard('${r.id}')">${r.name}</span></td>
+        ${wcCell(r.dials,rDialTgt)}
+        ${wcCell(r.emails,rEmailTgt)}
+        ${wcCell(r.disc,setsTgt)}
+        <td>${(r.held||0)>0?`<span class="num">${r.held}</span>`:`<span class="dim">—</span>`}</td>
+        <td><span class="pct ${pcc(rHoldPct,70,50)}">${rHoldPct?rHoldPct+'%':'—'}</span></td>
+        <td>${r.props>0?`<span class="num">${r.props}</span>`:`<span class="dim">—</span>`}</td>
+        <td>${r.fcst>0?`<span class="num">${r.fcst}</span>`:`<span class="dim">—</span>`}</td>
+        <td>${(r.pMRR+r.fMRR+(r.dpMRR||0))>0?`<span style="color:#f59e0b;font-weight:700;font-size:11px">${fmtMRR(r.pMRR+r.fMRR+(r.dpMRR||0))}</span>${rPipeCnt>0?`<div style="font-size:10px;color:#94a3b8;margin-top:1px">${rPipeCnt} deals</div>`:''}`:`<span class="dim">—</span>`}</td>
+        <td><span class="pct ${r.won>=T.CLOSES_MONTH?'hi':r.won>0?'mid':'lo'}">${r.won||'—'}</span></td>
+        <td>${r.wMRR>0?`<span class="mrr">${fmtMRR(r.wMRR)}</span>`:`<span class="dim">—</span>`}</td>
+        <td>${rQ>0?`<span class="num">${fmtMRR(rQ)}</span>`:`<span class="dim">—</span>`}</td>
+        <td>${attBarHTML(rAtt)}</td>
+      </tr>`;
+    };
+  }else{
+    const tHoldPct=pct(t.held,t.mSched);
+    const tPipeCntL=(t.props||0)+(t.fcst||0)+(t.dpCnt||0);
+    teamRowCells=`
+      <td>${toggle}${cfg.name}</td>
+      <td><span class="num">${t.dials.toLocaleString()}</span></td>
+      <td>${t.emails>0?`<span class="num">${t.emails.toLocaleString()}</span>`:`<span class="dim">—</span>`}</td>
+      <td><span class="num">${t.connects}</span></td>
+      <td><span class="num">${t.disc}</span></td>
+      <td><span class="pct ${pcc(dP,20,10)}">${dP}%</span></td>
+      <td>${t.held>0?`<span class="num">${t.held}</span>`:`<span class="dim">—</span>`}</td>
+      <td><span class="pct ${pcc(tHoldPct,70,50)}">${tHoldPct?tHoldPct+'%':'—'}</span></td>
+      <td><span class="num">${t.props}</span></td>
+      <td><span class="num">${t.fcst}</span></td>
+      <td>${(t.pMRR+t.fMRR+t.dpMRR)>0?`<span style="color:#f59e0b;font-weight:700;font-size:11px">${fmtMRR(t.pMRR+t.fMRR+t.dpMRR)}</span>${tPipeCntL>0?`<div style="font-size:10px;color:#94a3b8;margin-top:1px">${tPipeCntL} deals</div>`:''}`:`<span class="dim">—</span>`}</td>
+      <td><span class="num ${t.won>0?'hi':'dim'}">${t.won||'—'}</span></td>
+      <td>${t.wMRR>0?`<span class="mrr">${fmtMRR(t.wMRR)}</span>`:`<span class="dim">—</span>`}</td>
+      <td>${tQuota>0?`<span class="num">${fmtMRR(tQuota)}</span>`:`<span class="dim">—</span>`}</td>
+      <td>${attBarHTML(tAtt)}</td>`;
+    repRowsFn = r=>{
+      const rc=pct(r.connects,r.dials),rd2=pct(r.disc,r.connects);
+      const rHoldPct=pct(r.held||0,r.mSched||0);
+      const rd=r.dials>0&&r.wMRR>0?'$'+Math.round(r.wMRR/r.dials):'—';
+      const rQ=quotaMap[r.id]||0;
+      const rAtt=rQ>0?Math.round(r.wMRR/rQ*100):null;
+      const rPipeCntL=(r.props||0)+(r.fcst||0)+(r.dpCnt||0);
+      _repScoreData[r.id]={r,quota:rQ,range:_repScoreRange};
+      return `<tr class="acc-rep-row" data-team="${teamKey}">
+        <td><span class="rep-link" onclick="openRepCard('${r.id}')">${r.name}</span></td>
+        <td>${r.dials>0?`<span class="num">${r.dials.toLocaleString()}</span>`:`<span class="dim">—</span>`}</td>
+        <td>${r.emails>0?`<span class="num">${r.emails.toLocaleString()}</span>`:`<span class="dim">—</span>`}</td>
+        <td>${r.connects>0?`<span class="num">${r.connects}</span>`:`<span class="dim">—</span>`}</td>
+        <td>${r.disc>0?`<span class="num">${r.disc}</span>`:`<span class="dim">—</span>`}</td>
+        <td><span class="pct ${pcc(rd2,20,10)}">${rd2||'—'}${rd2?'%':''}</span></td>
+        <td>${(r.held||0)>0?`<span class="num">${r.held}</span>`:`<span class="dim">—</span>`}</td>
+        <td><span class="pct ${pcc(rHoldPct,70,50)}">${rHoldPct?rHoldPct+'%':'—'}</span></td>
+        <td>${r.props>0?`<span class="num">${r.props}</span>`:`<span class="dim">—</span>`}</td>
+        <td>${r.fcst>0?`<span class="num">${r.fcst}</span>`:`<span class="dim">—</span>`}</td>
+        <td>${(r.pMRR+r.fMRR+(r.dpMRR||0))>0?`<span style="color:#f59e0b;font-weight:700;font-size:11px">${fmtMRR(r.pMRR+r.fMRR+(r.dpMRR||0))}</span>${rPipeCntL>0?`<div style="font-size:10px;color:#94a3b8;margin-top:1px">${rPipeCntL} deals</div>`:''}`:`<span class="dim">—</span>`}</td>
+        <td>${r.won>0?`<span class="num">${r.won}</span>`:`<span class="dim">—</span>`}</td>
+        <td>${r.wMRR>0?`<span class="mrr">${fmtMRR(r.wMRR)}</span>`:`<span class="dim">—</span>`}</td>
+        <td>${rQ>0?`<span class="num">${fmtMRR(rQ)}</span>`:`<span class="dim">—</span>`}</td>
+        <td>${attBarHTML(rAtt)}</td>
+      </tr>`;
+    };
+  }
+
+  return `<tr class="acc-team-row" onclick="toggleAcc('${teamKey}')">${teamRowCells}</tr>`
+    + sortedReps.map(repRowsFn).join('');
+}
+
+function toggleAcc(teamKey){
+  const rows=document.querySelectorAll(`tr.acc-rep-row[data-team="${teamKey}"]`);
+  const toggle=document.getElementById(`acc-toggle-${teamKey}`);
+  const teamRow=toggle?toggle.closest('tr'):null;
+  const isOpen=teamRow&&teamRow.classList.contains('open');
+  if(isOpen){
+    rows.forEach(r=>r.classList.remove('visible'));
+    if(teamRow)teamRow.classList.remove('open');
+  }else{
+    rows.forEach(r=>r.classList.add('visible'));
+    if(teamRow)teamRow.classList.add('open');
+  }
+}
+
+function combinedTotRow(t,isShort,allQuota=0){
+  const cP=pct(t.connects,t.dials),dP=pct(t.disc,t.connects);
+  const holdP=pct(t.held,t.disc);
+  const rpd=t.dials>0&&t.wMRR>0?'$'+Math.round(t.wMRR/t.dials):'—';
+  const tAtt=allQuota>0?Math.round(t.wMRR/allQuota*100):null;
+  const qCell=`<td>${allQuota>0?`<span class="num">${fmtMRR(allQuota)}</span>`:`<span class="dim">—</span>`}</td>`;
+  const aCell=`<td>${attBarHTML(tAtt)}</td>`;
+  const totPipeCnt=(t.props||0)+(t.fcst||0)+(t.dpCnt||0);
+  const pipeCntSub=totPipeCnt>0?`<div style="font-size:10px;color:#94a3b8;margin-top:1px">${totPipeCnt} deals</div>`:'';
+  if(isShort)return `<tr class="tot">
+    <td>Combined Total</td>
+    <td><span class="num">${t.dials.toLocaleString()}</span></td>
+    <td><span class="num">${t.emails.toLocaleString()}</span></td>
+    <td><span class="num">${t.disc}</span></td>
+    <td>${t.held>0?`<span class="num">${t.held}</span>`:`<span class="dim">—</span>`}</td>
+    <td>${holdP?holdP+'%':'—'}</td>
+    <td><span class="num">${t.props}</span></td>
+    <td><span class="num">${t.fcst}</span></td>
+    <td>${(t.pMRR+t.fMRR+t.dpMRR)>0?`<span style="color:#f59e0b;font-weight:700;font-size:11px">${fmtMRR(t.pMRR+t.fMRR+t.dpMRR)}</span>${pipeCntSub}`:`<span class="dim">—</span>`}</td>
+    <td><span class="num ${t.won>0?'hi':'dim'}">${t.won||'—'}</span></td>
+    <td>${t.wMRR>0?`<span class="mrr">${fmtMRR(t.wMRR)}</span>`:`<span class="dim">—</span>`}</td>
+    ${qCell}${aCell}
+  </tr>`;
+  return `<tr class="tot">
+    <td>Combined Total</td>
+    <td><span class="num">${t.dials.toLocaleString()}</span></td>
+    <td><span class="num">${t.emails.toLocaleString()}</span></td>
+    <td><span class="num">${t.connects}</span></td>
+    <td><span class="num">${t.disc}</span></td>
+    <td>—</td>
+    <td>${t.held>0?`<span class="num">${t.held}</span>`:`<span class="dim">—</span>`}</td>
+    <td>${holdP?holdP+'%':'—'}</td>
+    <td><span class="num">${t.props}</span></td>
+    <td><span class="num">${t.fcst}</span></td>
+    <td>${(t.pMRR+t.fMRR+t.dpMRR)>0?`<span style="color:#f59e0b;font-weight:700;font-size:11px">${fmtMRR(t.pMRR+t.fMRR+t.dpMRR)}</span>${pipeCntSub}`:`<span class="dim">—</span>`}</td>
+    <td><span class="num ${t.won>0?'hi':'dim'}">${t.won||'—'}</span></td>
+    <td>${t.wMRR>0?`<span class="mrr">${fmtMRR(t.wMRR)}</span>`:`<span class="dim">—</span>`}</td>
+    ${qCell}${aCell}
+  </tr>`;
+}
+
+// ── COMPARE ───────────────────────────────────────────────────────────────────
+async function fetchPeriod(range,stepBase,totalSteps){
+  const{start,end}=range;
+  // Exclude all 1SEO opps for Frost/Compston from sets, won, and lost
+  let seoExclude='';
+  try{
+    const seoAll=await sf(`SELECT Id FROM Opportunity WHERE OwnerId IN ('0055f00000AWG5wAAH','005Rj00000GpYeNIAV') AND Name LIKE '%1SEO%'`);
+    if(seoAll.length>0){const ids=seoAll.map(r=>`'${r.Id}'`).join(',');seoExclude=` AND Id NOT IN (${ids})`;}
+  }catch(e){}
+  prog(`Dials ${range.label}…`,stepBase,totalSteps);
+  const dialRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Task WHERE TaskSubtype='Call' AND OwnerId IN (${ALL_IDS}) AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z GROUP BY OwnerId`);
+  const dialMap=toMap(dialRecs,'OwnerId','total');
+  prog(`Connects ${range.label}…`,stepBase+1,totalSteps);
+  const connRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Task WHERE TaskSubtype='Call' AND CallDisposition IN (${CONN_DISPS}) AND OwnerId IN (${ALL_IDS}) AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z GROUP BY OwnerId`);
+  const connMap=toMap(connRecs,'OwnerId','total');
+  prog(`Sets ${range.label}…`,stepBase+2,totalSteps);
+  const discRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Opportunity WHERE OwnerId IN (${ALL_IDS}) AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z${seoExclude} GROUP BY OwnerId`);
+  const discMap=toMap(discRecs,'OwnerId','total');
+  prog(`Won ${range.label}…`,stepBase+3,totalSteps);
+  const wonRecs=await sf(`SELECT OwnerId,COUNT(Id) total,SUM(Monthly_Recurring_Revenue__c) mrr FROM Opportunity WHERE IsWon=true AND CloseDate>=${start} AND CloseDate<=${end} AND OwnerId IN (${ALL_IDS})${seoExclude} GROUP BY OwnerId`);
+  const wonCnt=toMap(wonRecs,'OwnerId','total');
+  const wonMRR=toMap(wonRecs,'OwnerId','mrr');
+  prog(`Lost ${range.label}…`,stepBase+4,totalSteps);
+  const lostRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Opportunity WHERE IsClosed=true AND IsWon=false AND CloseDate>=${start} AND CloseDate<=${end} AND OwnerId IN (${ALL_IDS})${seoExclude} GROUP BY OwnerId`);
+  const lostMap=toMap(lostRecs,'OwnerId','total');
+  return ALL_REPS.map(r=>{
+    const dials=dialMap[r.id]||0,connects=connMap[r.id]||0,disc=discMap[r.id]||0;
+    const won=wonCnt[r.id]||0,wMRR=wonMRR[r.id]||0,lost=lostMap[r.id]||0;
+    return{id:r.id,name:r.name,team:ID_TEAM[r.id],dials,connects,disc,won,wMRR,lost,
+      connPct:pct(connects,dials),discPct:pct(disc,connects),winPct:pct(won,won+lost)};
+  });
+}
+
+async function loadCompare(){
+  const ranges=getCmpRanges();updateCmpRangeLabel();
+  document.getElementById('main').innerHTML=`<div class="loading"><div class="spinner"></div><div class="load-label">Comparing periods…</div><div class="load-step" id="progress">Fetching…</div><div class="prog-bar"><div class="prog-fill" id="pbar" style="width:3%"></div></div></div>`;
+  setStatus('Loading…');
+  try{
+    const repsA=await fetchPeriod(ranges.a,1,10);
+    const repsB=await fetchPeriod(ranges.b,6,10);
+    renderCompare(ranges.a,repsA,ranges.b,repsB);
+  }catch(err){
+    document.getElementById('main').innerHTML=`<div class="err">⚠️ ${err.message||err}</div>`;
+  }
+  setStatus(new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+}
+
+function dlta(a,b,mode){
+  if(b===0&&a===0)return '<span class="dim">—</span>';
+  if(b===0)return '<span class="hi">new</span>';
+  const diff=a-b,cls=diff>0?'hi':diff<0?'lo':'dim',arrow=diff>0?'↑':diff<0?'↓':'=';
+  if(mode==='pp'){const pp=Math.round(Math.abs(diff*10))/10;return `<span class="${cls}">${arrow} ${pp}pp</span>`;}
+  const p=Math.abs(Math.round(diff/b*100));
+  return `<span class="${cls}">${arrow} ${p}%</span>`;
+}
+
+function renderCompare(rangeA,repsA,rangeB,repsB){
+  const tA=sumR(repsA),tB=sumR(repsB);
+  const tiptA=sumR(repsA.filter(r=>r.team==='tippets')),tiptB=sumR(repsB.filter(r=>r.team==='tippets'));
+  const saumA=sumR(repsA.filter(r=>r.team==='saumell')),saumB=sumR(repsB.filter(r=>r.team==='saumell'));
+  document.getElementById('main').innerHTML=`
+    <div class="main">
+      <div class="cmp-header-card">
+        <div class="cmp-periods">
+          <div class="cmp-p"><div class="cmp-p-label">Current</div><div class="cmp-p-val">${rangeA.label}</div><div class="cmp-p-sub">${rangeA.sub}</div></div>
+          <div class="cmp-divider">↔</div>
+          <div class="cmp-p"><div class="cmp-p-label">Prior</div><div class="cmp-p-val" style="color:#94a3b8">${rangeB.label}</div><div class="cmp-p-sub">${rangeB.sub}</div></div>
+        </div>
+        <div class="cmp-delta-summary">
+          <div class="cmp-ds-item"><div class="cmp-ds-l">Dials</div><div class="cmp-ds-v">${dlta(tA.dials,tB.dials)}</div></div>
+          <div class="cmp-ds-item"><div class="cmp-ds-l">Discoveries</div><div class="cmp-ds-v">${dlta(tA.disc,tB.disc)}</div></div>
+          <div class="cmp-ds-item"><div class="cmp-ds-l">Won</div><div class="cmp-ds-v">${dlta(tA.won,tB.won)}</div></div>
+          <div class="cmp-ds-item"><div class="cmp-ds-l">Won MRR</div><div class="cmp-ds-v">${dlta(tA.wMRR,tB.wMRR)}</div></div>
+        </div>
+      </div>
+      <div class="cmp-section">
+        <div class="cmp-section-title">Combined — Both Teams</div>
+        ${cmpTable(rangeA,tA,rangeB,tB)}
+      </div>
+      <div class="cmp-section">
+        <div class="cmp-section-title">By Team</div>
+        <div class="teams-grid">
+          ${cmpTeamCard(TEAMS.tippets,rangeA,tiptA,rangeB,tiptB)}
+          ${cmpTeamCard(TEAMS.saumell,rangeA,saumA,rangeB,saumB)}
+        </div>
+      </div>
+      <div class="cmp-section">
+        <div class="cmp-section-title">AI Summary</div>
+        <div id="ai-summary"><div class="ai-card"><div class="ai-loading"><div class="ai-spinner"></div>Generating summary…</div></div></div>
+      </div>
+    </div>`;
+  generateAISummary(rangeA,tA,tiptA,saumA,rangeB,tB,tiptB,saumB);
+}
+
+function cmpTable(rA,tA,rB,tB){
+  const rows=[
+    {lbl:'Dials',vA:tA.dials.toLocaleString(),vB:tB.dials.toLocaleString(),d:dlta(tA.dials,tB.dials)},
+    {lbl:'Connects',vA:tA.connects,vB:tB.connects,d:dlta(tA.connects,tB.connects)},
+    {lbl:'Conn rate',vA:pct(tA.connects,tA.dials)+'%',vB:pct(tB.connects,tB.dials)+'%',d:dlta(pct(tA.connects,tA.dials),pct(tB.connects,tB.dials),'pp')},
+    null,
+    {lbl:'Discoveries',vA:tA.disc,vB:tB.disc,d:dlta(tA.disc,tB.disc)},
+    {lbl:'Set rate',vA:pct(tA.disc,tA.connects)+'%',vB:pct(tB.disc,tB.connects)+'%',d:dlta(pct(tA.disc,tA.connects),pct(tB.disc,tB.connects),'pp')},
+    null,
+    {lbl:'Won',vA:tA.won,vB:tB.won,d:dlta(tA.won,tB.won)},
+    {lbl:'Win rate',vA:pct(tA.won,tA.won+tA.lost)+'%',vB:pct(tB.won,tB.won+tB.lost)+'%',d:dlta(pct(tA.won,tA.won+tA.lost),pct(tB.won,tB.won+tB.lost),'pp')},
+    {lbl:'Won MRR',vA:tA.wMRR>0?fmtMRR(tA.wMRR):'—',vB:tB.wMRR>0?fmtMRR(tB.wMRR):'—',d:dlta(tA.wMRR,tB.wMRR)},
+    {lbl:'$/Dial',vA:tA.dials>0&&tA.wMRR>0?'$'+Math.round(tA.wMRR/tA.dials):'—',vB:tB.dials>0&&tB.wMRR>0?'$'+Math.round(tB.wMRR/tB.dials):'—',d:dlta(tA.dials>0?Math.round(tA.wMRR/tA.dials):0,tB.dials>0?Math.round(tB.wMRR/tB.dials):0)},
+  ];
+  return `<div class="cmp-metrics-card"><div class="tw"><table>
+    <thead><tr><th style="text-align:left">Metric</th><th class="col-a">${rA.label}</th><th class="col-b">${rB.label}</th><th>Change</th></tr></thead>
+    <tbody>${rows.map(r=>r?`<tr><td>${r.lbl}</td><td style="font-weight:700;color:#0f172a">${r.vA}</td><td style="color:#94a3b8">${r.vB}</td><td>${r.d}</td></tr>`:`<tr class="cmp-sep"><td colspan="4"> </td></tr>`).join('')}</tbody>
+  </table></div></div>`;
+}
+
+function cmpTeamCard(cfg,rA,tA,rB,tB){
+  const rows=[
+    {lbl:'Dials',vA:tA.dials.toLocaleString(),vB:tB.dials.toLocaleString(),d:dlta(tA.dials,tB.dials)},
+    {lbl:'Connects',vA:tA.connects,vB:tB.connects,d:dlta(tA.connects,tB.connects)},
+    {lbl:'Conn%',vA:pct(tA.connects,tA.dials)+'%',vB:pct(tB.connects,tB.dials)+'%',d:dlta(pct(tA.connects,tA.dials),pct(tB.connects,tB.dials),'pp')},
+    {lbl:'Discoveries',vA:tA.disc,vB:tB.disc,d:dlta(tA.disc,tB.disc)},
+    {lbl:'Won',vA:tA.won,vB:tB.won,d:dlta(tA.won,tB.won)},
+    {lbl:'Won MRR',vA:tA.wMRR>0?fmtMRR(tA.wMRR):'—',vB:tB.wMRR>0?fmtMRR(tB.wMRR):'—',d:dlta(tA.wMRR,tB.wMRR)},
+  ];
+  return `<div class="table-card">
+    <div class="table-hdr" style="background:white">
+      <div class="table-hdr-left">
+        <div class="t-dot" style="background:${cfg.color}"></div>
+        <div><div class="t-name">${cfg.name}</div><div class="t-mgr">${cfg.manager}</div></div>
+      </div>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th style="text-align:left">Metric</th><th class="col-a">${rA.label}</th><th class="col-b">${rB.label}</th><th>Δ</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr><td>${r.lbl}</td><td style="font-weight:700;color:#0f172a">${r.vA}</td><td style="color:#94a3b8">${r.vB}</td><td>${r.d}</td></tr>`).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+// ── AI SUMMARY ────────────────────────────────────────────────────────────────
+async function generateAISummary(rA,tA,tipA,sauA,rB,tB,tipB,sauB){
+  const el=document.getElementById('ai-summary');
+  if(!el)return;
+  // AI summary requires Cowork — not available in standalone mode
+  return;
+  const data=[
+    {label:'Combined — '+rA.label,dials:tA.dials,connects:tA.connects,conn_pct:pct(tA.connects,tA.dials),discoveries:tA.disc,won:tA.won,won_mrr:tA.wMRR,lost:tA.lost,win_rate:pct(tA.won,tA.won+tA.lost)},
+    {label:'Combined — '+rB.label,dials:tB.dials,connects:tB.connects,conn_pct:pct(tB.connects,tB.dials),discoveries:tB.disc,won:tB.won,won_mrr:tB.wMRR,lost:tB.lost,win_rate:pct(tB.won,tB.won+tB.lost)},
+    {label:'Tippets — '+rA.label,dials:tipA.dials,connects:tipA.connects,conn_pct:pct(tipA.connects,tipA.dials),discoveries:tipA.disc,won:tipA.won,won_mrr:tipA.wMRR},
+    {label:'Tippets — '+rB.label,dials:tipB.dials,connects:tipB.connects,conn_pct:pct(tipB.connects,tipB.dials),discoveries:tipB.disc,won:tipB.won,won_mrr:tipB.wMRR},
+    {label:'Saumell — '+rA.label,dials:sauA.dials,connects:sauA.connects,conn_pct:pct(sauA.connects,sauA.dials),discoveries:sauA.disc,won:sauA.won,won_mrr:sauA.wMRR},
+    {label:'Saumell — '+rB.label,dials:sauB.dials,connects:sauB.connects,conn_pct:pct(sauB.connects,sauB.dials),discoveries:sauB.disc,won:sauB.won,won_mrr:sauB.wMRR},
+  ];
+  try{
+    // askClaude not available in standalone mode — AI summary disabled
+    return;
+    // eslint-disable-next-line no-unreachable
+    const raw = null; void data;
+    let result;
+    try{const m=(typeof raw==='string'?raw:JSON.stringify(raw)).match(/\{[\s\S]*\}/);result=JSON.parse(m?m[0]:raw);}
+    catch(e){result={wins:[String(raw).slice(0,300)],focus:[]};}
+    const wins=(result.wins||[]).slice(0,3),focus=(result.focus||[]).slice(0,3);
+    el.innerHTML=`<div class="ai-card">
+      <div class="ai-wins"><div class="ai-hdr">✓ Wins<span class="ai-badge">AI</span></div><div class="ai-items">${wins.map((w,i)=>`<div class="ai-item"><div class="ai-num">${i+1}</div><div>${w}</div></div>`).join('')}</div></div>
+      <div class="ai-focus"><div class="ai-hdr">↗ Focus Areas<span class="ai-badge">AI</span></div><div class="ai-items">${focus.map((f,i)=>`<div class="ai-item"><div class="ai-num">${i+1}</div><div>${f}</div></div>`).join('')}</div></div>
+    </div>`;
+  }catch(err){
+    el.innerHTML=`<div style="color:#94a3b8;font-size:11px;padding:12px 14px;background:white;border-radius:10px;border:1px solid #e2e8f0">AI summary unavailable</div>`;
+  }
+}
+
+// ── YEARLY PERFORMANCE TAB ────────────────────────────────────────────────────
+let _yrCharts = {};
+
+async function loadYearly(){
+  const range=getRange();
+  const yr=parseInt(range.start.slice(0,4));
+  const start=range.start, end=range.end;
+  document.getElementById('main').innerHTML=`<div class="loading"><div class="spinner"></div><div class="load-label">Yearly Performance ${yr}</div><div class="load-step" id="progress">Connecting…</div><div class="prog-bar"><div class="prog-fill" id="pbar" style="width:3%"></div></div></div>`;
+  setStatus('Loading…');
+  try{
+    prog('YTD Won… 1/4',1,4);
+    const wonRecs = await sf(`SELECT OwnerId,COUNT(Id) total,SUM(Monthly_Recurring_Revenue__c) mrr FROM Opportunity WHERE IsWon=true AND CloseDate>=${start} AND CloseDate<=${end} AND OwnerId IN (${ALL_IDS}) GROUP BY OwnerId`);
+    prog('YTD Quota… 2/4',2,4);
+    const quotaRecs = await sf(`SELECT Id,Quota_MRR__c,Quota_Units__c FROM User WHERE Id IN (${ALL_IDS})`);
+    prog('YTD Open Pipeline… 3/4',3,4);
+    const pipeRecs = await sf(`SELECT OwnerId,StageName,SUM(Monthly_Recurring_Revenue__c) mrr FROM Opportunity WHERE StageName IN ('Discovery','Proposal','Forecast') AND IsClosed=false AND OwnerId IN (${ALL_IDS}) GROUP BY OwnerId,StageName`);
+    prog('YTD Dials… 4/4',4,4);
+    const dialRecs = await sf(`SELECT OwnerId,COUNT(Id) total FROM Task WHERE TaskSubtype='Call' AND OwnerId IN (${ALL_IDS}) AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z GROUP BY OwnerId`);
+
+    const wonMRRmap={}, wonCntmap={};
+    for(const r of wonRecs){wonMRRmap[r.OwnerId]=r.mrr||0; wonCntmap[r.OwnerId]=r.total||0;}
+
+    const quotaMRRmap={}, quotaUnitsMap={};
+    for(const r of quotaRecs){
+      quotaMRRmap[r.Id]=(r.Quota_MRR__c||0)*12;
+      quotaUnitsMap[r.Id]=(r.Quota_Units__c||0)*12;
+    }
+
+    const pipeMRRmap={};
+    for(const r of pipeRecs){pipeMRRmap[r.OwnerId]=(pipeMRRmap[r.OwnerId]||0)+(r.mrr||0);}
+
+    const dialMap={};
+    for(const r of dialRecs){dialMap[r.OwnerId]=r.total||0;}
+
+    const repData = ALL_REPS.map(r=>({
+      ...r,
+      team: ID_TEAM[r.id],
+      wonMRR: wonMRRmap[r.id]||0,
+      wonUnits: wonCntmap[r.id]||0,
+      quotaMRR: quotaMRRmap[r.id]||0,
+      quotaUnits: quotaUnitsMap[r.id]||0,
+      pipeMRR: pipeMRRmap[r.id]||0,
+      dials: dialMap[r.id]||0,
+    }));
+
+    renderYearly(yr, repData, start, end);
+  }catch(err){
+    document.getElementById('main').innerHTML=`<div class="err">⚠️ ${err.message||err}</div>`;
+  }
+  setStatus(new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+}
+
+function renderYearly(yr, repData, start, end){
+  // Destroy old chart instances
+  Object.values(_yrCharts).forEach(c=>{try{c.destroy();}catch(e){}});
+  _yrCharts={};
+
+  const totMRR   = repData.reduce((s,r)=>s+r.wonMRR,0);
+  const totUnits = repData.reduce((s,r)=>s+r.wonUnits,0);
+  const totQMRR  = repData.reduce((s,r)=>s+r.quotaMRR,0);
+  const totQUnit = repData.reduce((s,r)=>s+r.quotaUnits,0);
+  const avgDeal  = totUnits>0?totMRR/totUnits:0;
+  const mrrAtt   = totQMRR>0?Math.round(totMRR/totQMRR*100):null;
+  const unitAtt  = totQUnit>0?Math.round(totUnits/totQUnit*100):null;
+
+  // Sort reps by won MRR desc
+  const sorted = [...repData].sort((a,b)=>b.wonMRR-a.wonMRR);
+  const sortedByUnits = [...repData].sort((a,b)=>b.wonUnits-a.wonUnits);
+
+  // Team totals
+  const tipData = repData.filter(r=>r.team==='tippets');
+  const sauData = repData.filter(r=>r.team==='saumell');
+  const tipMRR=tipData.reduce((s,r)=>s+r.wonMRR,0), tipUnits=tipData.reduce((s,r)=>s+r.wonUnits,0);
+  const sauMRR=sauData.reduce((s,r)=>s+r.wonMRR,0), sauUnits=sauData.reduce((s,r)=>s+r.wonUnits,0);
+
+  const repColors = ALL_REPS.map((r,i)=>{
+    const palette=['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#84cc16','#f97316','#ec4899','#6366f1','#14b8a6','#a855f7','#22c55e','#fb923c','#38bdf8','#e11d48','#7c3aed','#0284c7'];
+    return palette[i%palette.length];
+  });
+  const idColorMap = Object.fromEntries(ALL_REPS.map((r,i)=>[r.id,repColors[i]]));
+
+  function gaugeHTML(id,label,val,quota,att,color){
+    const hasQuota = quota>0;
+    const attColor = !hasQuota?'#94a3b8':att>=100?'#10b981':att>=75?'#f59e0b':'#ef4444';
+    return `<div class="yr-gauge-card">
+      <div class="yr-gauge-title">${label}</div>
+      <div class="yr-gauge-wrap"><canvas id="${id}" width="220" height="130"></canvas></div>
+      <div class="yr-gauge-val" style="color:${attColor}">${typeof val==='number'&&val>0?(label.includes('MRR')?fmtMRR(val):val.toLocaleString()):'—'}</div>
+      ${hasQuota?`<div class="yr-gauge-pct" style="color:${attColor}">${att}% of ${label.includes('MRR')?fmtMRR(quota):quota.toLocaleString()} annual target</div>`:`<div class="yr-gauge-pct" style="color:#94a3b8">No annual quota in Salesforce</div>`}
+    </div>`;
+  }
+
+  function hBarHTML(id,title,subtitle,data,fmtFn){
+    const maxVal = Math.max(...data.map(d=>d.v),1);
+    const rows = data.map(d=>{
+      const w = Math.round(d.v/maxVal*100);
+      const col = idColorMap[d.id]||'#3b82f6';
+      return `<div class="yr-hbar-row">
+        <div class="yr-hbar-label" title="${d.name}">${d.name.split(' ').slice(-1)[0]}, ${d.name.split(' ')[0]}</div>
+        <div class="yr-hbar-track">
+          <div class="yr-hbar-fill" style="width:${w}%;background:${col}"></div>
+        </div>
+        <div class="yr-hbar-val">${d.v>0?fmtFn(d.v):'—'}</div>
+      </div>`;
+    }).join('');
+    return `<div class="yr-chart-card">
+      <div class="yr-chart-title">${title}</div>
+      <div class="yr-chart-sub">${subtitle}</div>
+      <div class="yr-hbar-list">${rows}</div>
+    </div>`;
+  }
+
+  function donutHTML(id,title,subtitle){
+    return `<div class="yr-chart-card">
+      <div class="yr-chart-title">${title}</div>
+      <div class="yr-chart-sub">${subtitle}</div>
+      <div class="yr-donut-wrap"><canvas id="${id}" width="200" height="200"></canvas></div>
+    </div>`;
+  }
+
+  const mrrAtt2 = mrrAtt!==null?mrrAtt:0;
+  const unitAtt2 = unitAtt!==null?unitAtt:0;
+
+  document.getElementById('main').innerHTML=`
+    <div class="main yr-main">
+      <div class="yr-top-row">
+        <div class="yr-kpi-strip">
+          <div class="yr-kpi-tile tip" data-tip="Total Closed Won MRR year-to-date (Jan 1 – today)">
+            <div class="yr-kpi-n" style="color:#10b981">${totMRR>0?fmtMRR(totMRR):'—'}</div>
+            <div class="yr-kpi-l">YTD Won MRR</div>
+            <div class="yr-kpi-s">${totUnits} deals closed</div>
+          </div>
+          <div class="yr-kpi-tile tip" data-tip="Average MRR per closed deal year-to-date">
+            <div class="yr-kpi-n" style="color:#3b82f6">${avgDeal>0?fmtMRR(Math.round(avgDeal)):'—'}</div>
+            <div class="yr-kpi-l">Avg Deal Size</div>
+            <div class="yr-kpi-s">YTD</div>
+          </div>
+          <div class="yr-kpi-tile tip" data-tip="Total open pipeline MRR across Discovery, Proposal, and Forecast">
+            <div class="yr-kpi-n" style="color:#f59e0b">${fmtMRR(repData.reduce((s,r)=>s+r.pipeMRR,0)||0)}</div>
+            <div class="yr-kpi-l">Open Pipeline</div>
+            <div class="yr-kpi-s">Discovery + Proposal + Forecast</div>
+          </div>
+          <div class="yr-kpi-tile tip" data-tip="Total dials logged year-to-date">
+            <div class="yr-kpi-n" style="color:#6366f1">${repData.reduce((s,r)=>s+r.dials,0).toLocaleString()}</div>
+            <div class="yr-kpi-l">YTD Dials</div>
+            <div class="yr-kpi-s">${repData.filter(r=>r.dials>0).length} active sellers</div>
+          </div>
+          <div class="yr-kpi-tile tip" data-tip="Team Tippets total closed Won MRR YTD">
+            <div class="yr-kpi-n" style="color:#3b82f6">${tipMRR>0?fmtMRR(tipMRR):'—'}</div>
+            <div class="yr-kpi-l">Tippets MRR</div>
+            <div class="yr-kpi-s">${tipUnits} units</div>
+          </div>
+          <div class="yr-kpi-tile tip" data-tip="Team Saumell total closed Won MRR YTD">
+            <div class="yr-kpi-n" style="color:#8b5cf6">${sauMRR>0?fmtMRR(sauMRR):'—'}</div>
+            <div class="yr-kpi-l">Saumell MRR</div>
+            <div class="yr-kpi-s">${sauUnits} units</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+        ${gaugeHTML('gauge-mrr','YTD MRR Goal',totMRR,totQMRR,mrrAtt2,'#10b981')}
+        ${gaugeHTML('gauge-units','YTD Units',totUnits,totQUnit,unitAtt2,'#3b82f6')}
+        <div class="yr-gauge-card tip" data-tip="Total Closed Won deals year-to-date">
+          <div class="yr-gauge-title">YTD Closed Units</div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:12px 0 6px">
+            <div style="font-size:52px;font-weight:900;line-height:1;color:#3b82f6">${totUnits||'—'}</div>
+            <div style="font-size:10px;color:#94a3b8;margin-top:4px">deals closed</div>
+          </div>
+          <div class="yr-gauge-pct">${totQUnit>0?`${unitAtt2}% of ${totQUnit} target`:'YTD closed deals'}</div>
+        </div>
+        <div class="yr-gauge-card tip" data-tip="Average MRR per closed deal year-to-date">
+          <div class="yr-gauge-title">Avg Deal Size &middot; YTD</div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:12px 0 6px">
+            <div style="font-size:36px;font-weight:900;line-height:1;color:${avgDeal>=3000?'#10b981':avgDeal>=2000?'#f59e0b':'#ef4444'}">${avgDeal>0?fmtMRR(Math.round(avgDeal)):'—'}</div>
+            <div style="font-size:10px;color:#94a3b8;margin-top:4px">per deal</div>
+          </div>
+          <div class="yr-gauge-pct">${totUnits} deal${totUnits!==1?'s':''} · ${totMRR>0?fmtMRR(totMRR)+' total':''}</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        ${hBarHTML('hbar-mrr','YTD Closed MRR','By Rep — Closed Won',
+          sorted.map(r=>({id:r.id,name:r.name,v:r.wonMRR})),
+          v=>fmtMRR(Math.round(v)))}
+        ${hBarHTML('hbar-avgdeal','Avg Deal Size by Rep','YTD — Won MRR ÷ Units',
+          sorted.filter(r=>r.wonUnits>0).map(r=>({id:r.id,name:r.name,v:Math.round(r.wonMRR/r.wonUnits)})).sort((a,b)=>b.v-a.v),
+          v=>fmtMRR(v))}
+      </div>
+
+      <div class="yr-rep-table-wrap">
+        <div class="yr-chart-card" style="overflow:auto">
+          <div class="yr-chart-title">Rep Leaderboard · ${yr}</div>
+          <div class="yr-chart-sub">Year-to-date · sorted by Won MRR</div>
+          <table class="yr-tbl">
+            <thead><tr>
+              <th style="text-align:left">Rep</th>
+              <th style="text-align:left">Team</th>
+              <th class="tip" data-tip="Total dials YTD">Dials</th>
+              <th class="tip" data-tip="Closed Won deals YTD">Units</th>
+              <th class="tip" data-tip="Annual unit quota (monthly × 12)">Unit Quota</th>
+              <th class="tip" data-tip="Units ÷ annual unit quota">Unit Att%</th>
+              <th class="tip" data-tip="Closed Won MRR YTD">Won MRR</th>
+              <th class="tip" data-tip="Annual MRR quota (monthly × 12)">MRR Quota</th>
+              <th class="tip" data-tip="Won MRR ÷ annual MRR quota">MRR Att%</th>
+              <th class="tip" data-tip="Won MRR ÷ Units">Avg Deal</th>
+              <th class="tip" data-tip="Open pipeline MRR (Discovery + Proposal + Forecast)">Pipeline</th>
+            </tr></thead>
+            <tbody>
+              ${sorted.map(r=>{
+                const uAtt=r.quotaUnits>0?Math.round(r.wonUnits/r.quotaUnits*100):null;
+                const mAtt=r.quotaMRR>0?Math.round(r.wonMRR/r.quotaMRR*100):null;
+                const avgD=r.wonUnits>0?Math.round(r.wonMRR/r.wonUnits):0;
+                const tc=TEAMS[r.team].color;
+                const attCls=(att)=>att===null?'dim':att>=100?'hi':att>=75?'mid':'lo';
+                return `<tr>
+                  <td style="font-weight:600;color:#0f172a">${r.name}</td>
+                  <td><span style="font-size:10px;color:${tc};font-weight:700">${r.team==='tippets'?'Tippets':'Saumell'}</span></td>
+                  <td style="text-align:center;color:#64748b">${r.dials>0?r.dials.toLocaleString():'—'}</td>
+                  <td style="text-align:center;font-weight:700">${r.wonUnits||'—'}</td>
+                  <td style="text-align:center;color:#94a3b8">${r.quotaUnits>0?r.quotaUnits:'—'}</td>
+                  <td style="text-align:center"><span class="pct ${attCls(uAtt)}">${uAtt!==null?uAtt+'%':'—'}</span></td>
+                  <td style="text-align:right;font-weight:700;color:#10b981">${r.wonMRR>0?fmtMRR(r.wonMRR):'—'}</td>
+                  <td style="text-align:right;color:#94a3b8">${r.quotaMRR>0?fmtMRR(r.quotaMRR):'—'}</td>
+                  <td style="text-align:center">${mAtt!==null?attBarHTML(mAtt):`<span class="dim">—</span>`}</td>
+                  <td style="text-align:right;color:#3b82f6">${avgD>0?fmtMRR(avgD):'—'}</td>
+                  <td style="text-align:right;color:#f59e0b">${r.pipeMRR>0?fmtMRR(r.pipeMRR):'—'}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+
+  // Init charts after DOM
+  setTimeout(()=>{
+    // Gauge: MRR
+    initGaugeChart('gauge-mrr', mrrAtt2, '#10b981');
+    // Gauge: Units
+    initGaugeChart('gauge-units', unitAtt2, '#3b82f6');
+  }, 60);
+}
+
+function initGaugeChart(id, pct, color){
+  const canvas = document.getElementById(id);
+  if(!canvas||typeof Chart==='undefined') return;
+  if(_yrCharts[id]){try{_yrCharts[id].destroy();}catch(e){}}
+  const val   = Math.min(pct, 100);
+  const empty = 100 - val;
+  _yrCharts[id] = new Chart(canvas.getContext('2d'),{
+    type:'doughnut',
+    data:{
+      datasets:[{
+        data:[val, empty, 100],
+        backgroundColor:[
+          val>=100?'#10b981':val>=75?'#f59e0b':'#ef4444',
+          '#e2e8f0',
+          'transparent'
+        ],
+        borderWidth:0,
+        circumference:180,
+        rotation:270,
+      }]
+    },
+    options:{
+      responsive:false,
+      cutout:'72%',
+      plugins:{legend:{display:false},tooltip:{enabled:false}}
+    }
+  });
+}
+
+// ── CLOSED DEALS TAB ──────────────────────────────────────────────────────────
+const _cdCharts={};
+function cdFirstOfMonth(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;}
+function cdLastOfMonth(d){const e=new Date(d.getFullYear(),d.getMonth()+1,0);return `${e.getFullYear()}-${String(e.getMonth()+1).padStart(2,'0')}-${String(e.getDate()).padStart(2,'0')}`;}
+function cdFmt(n){return '$'+n.toLocaleString();}
+function cdDelta(cur,prev){
+  if(prev===0&&cur===0)return '<span class="cd-delta flat">—</span>';
+  if(prev===0)return '<span class="cd-delta up">+∞%</span>';
+  const pct=((cur-prev)/prev*100).toFixed(1);
+  const cls=cur>prev?'up':cur<prev?'dn':'flat';
+  const sign=cur>=prev?'+':'';
+  return `<span class="cd-delta ${cls}">${sign}${pct}%</span>`;
+}
+
+async function loadClosed(){
+  const c=document.getElementById('main');
+  const range=getRange();
+  const{start:curStart,end:curEnd,label:rangeLabel}=range;
+  c.innerHTML=`<div class="loading"><div class="spinner"></div><p>Loading closed deals — ${rangeLabel}…</p></div>`;
+
+  // Compute prior equivalent period (same duration, immediately before)
+  function shiftDays(dateStr,n){
+    const d=new Date(dateStr+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);
+  }
+  const durDays=Math.round((new Date(curEnd+'T12:00:00')-new Date(curStart+'T12:00:00'))/86400000)+1;
+  const prevEnd=shiftDays(curStart,-1);
+  const prevStart=shiftDays(prevEnd,-(durDays-1));
+
+  try{
+    const curRecs=await sf(`SELECT OwnerId,COUNT(Id) total,SUM(Monthly_Recurring_Revenue__c) mrr FROM Opportunity WHERE IsWon=true AND CloseDate>=${curStart} AND CloseDate<=${curEnd} AND OwnerId IN (${ALL_IDS}) GROUP BY OwnerId`);
+    const prevRecs=await sf(`SELECT OwnerId,COUNT(Id) total,SUM(Monthly_Recurring_Revenue__c) mrr FROM Opportunity WHERE IsWon=true AND CloseDate>=${prevStart} AND CloseDate<=${prevEnd} AND OwnerId IN (${ALL_IDS}) GROUP BY OwnerId`);
+
+    const curMap={}, prevMap={};
+    (curRecs||[]).forEach(r=>{curMap[r.OwnerId]={units:r.total||0,mrr:r.mrr||0};});
+    (prevRecs||[]).forEach(r=>{prevMap[r.OwnerId]={units:r.total||0,mrr:r.mrr||0};});
+
+    // Detail records for selected period
+    const wonDetail=await sf(`SELECT Id,Name,AccountId,Account.Name,OwnerId,CloseDate,Monthly_Recurring_Revenue__c,Monthly_Ad_Revenue__c FROM Opportunity WHERE IsWon=true AND CloseDate>=${curStart} AND CloseDate<=${curEnd} AND OwnerId IN (${ALL_IDS}) ORDER BY CloseDate DESC LIMIT 200`);
+    const lostDetail=await sf(`SELECT Id,Name,AccountId,Account.Name,OwnerId,CloseDate,Lost_Reason__c,Competitor_Lost_To__c FROM Opportunity WHERE IsClosed=true AND IsWon=false AND CloseDate>=${curStart} AND CloseDate<=${curEnd} AND OwnerId IN (${ALL_IDS}) ORDER BY CloseDate DESC LIMIT 200`);
+
+    renderClosed(curMap,prevMap,wonDetail||[],lostDetail||[],rangeLabel,prevStart,prevEnd);
+  }catch(e){
+    document.getElementById('main').innerHTML=`<div class="loading"><p style="color:#ef4444">Error: ${e.message}</p></div>`;
+  }
+}
+
+function renderClosed(curMap,prevMap,wonDetail=[],lostDetail=[],curLabel,prevStart,prevEnd){
+  if(!curLabel){const now=new Date();const mo=['January','February','March','April','May','June','July','August','September','October','November','December'];curLabel=mo[now.getMonth()]+' '+now.getFullYear();}
+  const prevLabel=prevStart&&prevEnd?`${fmtD(prevStart)}–${fmtD(prevEnd)}`:'Prior period';
+  let curTotalMRR=0,curTotalUnits=0,prevTotalMRR=0,prevTotalUnits=0;
+  ALL_REPS.forEach(r=>{
+    const c=curMap[r.id]||{units:0,mrr:0};
+    const p=prevMap[r.id]||{units:0,mrr:0};
+    curTotalMRR+=c.mrr; curTotalUnits+=c.units;
+    prevTotalMRR+=p.mrr; prevTotalUnits+=p.units;
+  });
+
+  const curAvg=curTotalUnits>0?Math.round(curTotalMRR/curTotalUnits):0;
+  const prevAvg=prevTotalUnits>0?Math.round(prevTotalMRR/prevTotalUnits):0;
+
+  const repsCurSorted=[...ALL_REPS]
+    .map(r=>({...r,...(curMap[r.id]||{units:0,mrr:0})}))
+    .sort((a,b)=>b.mrr-a.mrr);
+  const repsPrevSorted=[...ALL_REPS]
+    .map(r=>({...r,...(prevMap[r.id]||{units:0,mrr:0})}))
+    .sort((a,b)=>b.mrr-a.mrr);
+
+  const maxCurMRR=Math.max(...repsCurSorted.map(r=>r.mrr),1);
+  const maxPrevMRR=Math.max(...repsPrevSorted.map(r=>r.mrr),1);
+
+  const curMonthName=curLabel||'Selected Period';
+  const prevMonthName=prevLabel||'Prior Period';
+
+  const repColors=ALL_REPS.map(r=>{
+    for(const t of Object.values(TEAMS)){if(t.reps.find(x=>x.id===r.id))return t.color;}
+    return '#94a3b8';
+  });
+
+  function hbarRows(sorted,maxMRR){
+    return sorted.map(r=>{
+      const pct=maxMRR>0?Math.round(r.mrr/maxMRR*100):0;
+      const col=(()=>{for(const t of Object.values(TEAMS)){if(t.reps.find(x=>x.id===r.id))return t.color;}return '#94a3b8';})();
+      return `<div class="cd-hbar-row">
+        <div class="cd-hbar-label" title="${r.name}">${r.name.split(' ')[0]}</div>
+        <div class="cd-hbar-track">
+          <div class="cd-hbar-fill" style="width:${pct}%;background:${col}">
+            ${r.mrr>0?`<span class="cd-hbar-inlabel">${(r.mrr/1000).toFixed(1)}k</span>`:''}
+          </div>
+        </div>
+        <div class="cd-hbar-val">${r.mrr>0?cdFmt(r.mrr):'—'}</div>
+      </div>`;
+    }).join('');
+  }
+
+  const html=`
+  <div style="background:#f8fafc;min-height:100%;padding-bottom:20px">
+    <div class="cd-header">
+      <div class="cd-header-title">CLOSED DEALS $$</div>
+      <div class="cd-header-sub">${curMonthName} vs ${prevMonthName} · All Reps</div>
+    </div>
+    <div class="cd-summary-row">
+      <div class="cd-sum-tile">
+        <div class="cd-sum-n" style="color:#3b82f6">${curTotalUnits}</div>
+        <div class="cd-sum-l">Units (${curMonthName})</div>
+        <div class="cd-sum-s">${cdDelta(curTotalUnits,prevTotalUnits)}</div>
+      </div>
+      <div class="cd-sum-tile">
+        <div class="cd-sum-n" style="color:#10b981">${cdFmt(curTotalMRR)}</div>
+        <div class="cd-sum-l">MRR (${curMonthName})</div>
+        <div class="cd-sum-s">${cdDelta(curTotalMRR,prevTotalMRR)}</div>
+      </div>
+      <div class="cd-sum-tile">
+        <div class="cd-sum-n" style="color:#f59e0b">${curAvg>0?cdFmt(curAvg):'—'}</div>
+        <div class="cd-sum-l">Avg Deal (${curMonthName})</div>
+        <div class="cd-sum-s">${cdDelta(curAvg,prevAvg)}</div>
+      </div>
+      <div class="cd-sum-tile">
+        <div class="cd-sum-n" style="color:#3b82f6">${prevTotalUnits}</div>
+        <div class="cd-sum-l">Units (${prevMonthName})</div>
+        <div class="cd-sum-s">&nbsp;</div>
+      </div>
+      <div class="cd-sum-tile">
+        <div class="cd-sum-n" style="color:#64748b">${cdFmt(prevTotalMRR)}</div>
+        <div class="cd-sum-l">MRR (${prevMonthName})</div>
+        <div class="cd-sum-s">&nbsp;</div>
+      </div>
+      <div class="cd-sum-tile">
+        <div class="cd-sum-n" style="color:#94a3b8">${prevAvg>0?cdFmt(prevAvg):'—'}</div>
+        <div class="cd-sum-l">Avg Deal (${prevMonthName})</div>
+        <div class="cd-sum-s">&nbsp;</div>
+      </div>
+    </div>
+    <div class="cd-grid">
+      <div class="cd-col">
+        <div class="cd-card">
+          <div class="cd-card-title">Units by Rep</div>
+          <div class="cd-card-sub">${curMonthName}</div>
+          <div class="cd-donut-wrap"><canvas id="cdDonutCur" width="180" height="180"></canvas></div>
+          <div class="cd-unit-total">${curTotalUnits} total units</div>
+        </div>
+        <div class="cd-card">
+          <div class="cd-card-title">Units by Rep</div>
+          <div class="cd-card-sub">${prevMonthName}</div>
+          <div class="cd-donut-wrap"><canvas id="cdDonutPrev" width="180" height="180"></canvas></div>
+          <div class="cd-unit-total">${prevTotalUnits} total units</div>
+        </div>
+      </div>
+      <div class="cd-col">
+        <div class="cd-card">
+          <div class="cd-card-title">Total MRR <span style="font-weight:400;color:#94a3b8">${curMonthName}</span></div>
+          <div class="cd-big-mrr" style="color:#10b981">${cdFmt(curTotalMRR)}</div>
+          <div class="cd-big-sub">${curTotalUnits} deals closed this month</div>
+        </div>
+        <div class="cd-card">
+          <div class="cd-card-title">MRR by Rep <span style="font-weight:400;color:#94a3b8">${curMonthName}</span></div>
+          <div class="cd-hbar-list">${hbarRows(repsCurSorted,maxCurMRR)}</div>
+        </div>
+        <div class="cd-card">
+          <div class="cd-card-title">Avg Deal Size <span style="font-weight:400;color:#94a3b8">${curMonthName}</span></div>
+          <div class="cd-avg-val" style="color:#f59e0b">${curAvg>0?cdFmt(curAvg):'—'}</div>
+          <div class="cd-big-sub">per closed deal</div>
+        </div>
+      </div>
+      <div class="cd-col">
+        <div class="cd-card">
+          <div class="cd-card-title">Total MRR <span style="font-weight:400;color:#94a3b8">${prevMonthName}</span></div>
+          <div class="cd-big-mrr" style="color:#64748b">${cdFmt(prevTotalMRR)}</div>
+          <div class="cd-big-sub">${prevTotalUnits} deals closed last month</div>
+        </div>
+        <div class="cd-card">
+          <div class="cd-card-title">MRR by Rep <span style="font-weight:400;color:#94a3b8">${prevMonthName}</span></div>
+          <div class="cd-hbar-list">${hbarRows(repsPrevSorted,maxPrevMRR)}</div>
+        </div>
+        <div class="cd-card">
+          <div class="cd-card-title">Avg Deal Size <span style="font-weight:400;color:#94a3b8">${prevMonthName}</span></div>
+          <div class="cd-avg-val" style="color:#94a3b8">${prevAvg>0?cdFmt(prevAvg):'—'}</div>
+          <div class="cd-big-sub">per closed deal</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DEAL DETAIL TABLES ── -->
+  <div style="padding:0 0 24px">
+    <!-- Won vs Lost scoreboard -->
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;background:white;border-radius:10px;border:1px solid #e2e8f0;padding:16px 20px">
+      <div style="flex:1;text-align:center">
+        <div style="font-size:38px;font-weight:900;color:#10b981;line-height:1">${wonDetail.length}</div>
+        <div style="font-size:13px;font-weight:700;color:#64748b;margin-top:3px;text-transform:uppercase;letter-spacing:.4px">Deals Won</div>
+      </div>
+      <div style="font-size:28px;color:#e2e8f0;font-weight:300">vs</div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:38px;font-weight:900;color:#ef4444;line-height:1">${lostDetail.length}</div>
+        <div style="font-size:13px;font-weight:700;color:#64748b;margin-top:3px;text-transform:uppercase;letter-spacing:.4px">Deals Lost</div>
+      </div>
+      <div style="flex:2;padding-left:20px;border-left:1px solid #f1f5f9">
+        <div style="font-size:13px;color:#64748b;font-weight:600;margin-bottom:6px">${curMonthName} Win Rate</div>
+        <div style="background:#f1f5f9;border-radius:6px;height:10px;overflow:hidden">
+          <div style="height:100%;background:#10b981;border-radius:6px;width:${wonDetail.length+lostDetail.length>0?Math.round(wonDetail.length/(wonDetail.length+lostDetail.length)*100):0}%"></div>
+        </div>
+        <div style="font-size:13px;font-weight:800;color:#10b981;margin-top:4px">${wonDetail.length+lostDetail.length>0?Math.round(wonDetail.length/(wonDetail.length+lostDetail.length)*100):0}%</div>
+      </div>
+    </div>
+
+    <!-- Won deals table -->
+    <div style="background:white;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:14px">
+      <div style="padding:12px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;background:#f0fdf4">
+        <div style="width:9px;height:9px;border-radius:50%;background:#10b981;flex-shrink:0"></div>
+        <div style="font-size:14px;font-weight:700;color:#15803d">Won Deals — ${curMonthName}</div>
+        <div style="margin-left:auto;font-size:13px;color:#64748b">${wonDetail.length} deal${wonDetail.length!==1?'s':''}</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr>
+              <th style="padding:9px 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;text-align:left;border-bottom:1px solid #f1f5f9;background:#fafafa;white-space:nowrap">Account</th>
+              <th style="padding:9px 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;text-align:left;border-bottom:1px solid #f1f5f9;background:#fafafa;white-space:nowrap">Rep</th>
+              <th style="padding:9px 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;text-align:right;border-bottom:1px solid #f1f5f9;background:#fafafa;white-space:nowrap">Service MRR</th>
+              <th style="padding:9px 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;text-align:right;border-bottom:1px solid #f1f5f9;background:#fafafa;white-space:nowrap">Ad Revenue</th>
+              <th style="padding:9px 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;text-align:right;border-bottom:1px solid #f1f5f9;background:#fafafa;white-space:nowrap">Close Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${wonDetail.length===0?`<tr><td colspan="5" style="padding:20px;text-align:center;color:#94a3b8;font-size:13px">No won deals this month yet</td></tr>`:''}
+            ${wonDetail.map(r=>{
+              const sfBase=_sfInstanceUrl||'https://scorpion.lightning.force.com';
+              const acctUrl=`${sfBase}/lightning/r/Account/${r.AccountId}/view`;
+              const oppUrl=`${sfBase}/lightning/r/Opportunity/${r.Id}/view`;
+              const acctName=(r.Account&&r.Account.Name)||r.Name||'—';
+              const repName=ID_NAME[r.OwnerId]||'Unknown';
+              const serviceMRR=r.Monthly_Recurring_Revenue__c||0;
+              const adRev=r.Monthly_Ad_Revenue__c||0;
+              const closeD=r.CloseDate?fmtD(r.CloseDate):'—';
+              return `<tr style="border-bottom:1px solid #f8fafc">
+                <td style="padding:9px 14px;white-space:nowrap">
+                  <a href="${acctUrl}" target="_blank" style="color:#0f172a;font-weight:600;font-size:14px;text-decoration:none" title="Open Account in Salesforce">${acctName}</a>
+                  <a href="${oppUrl}" target="_blank" style="margin-left:6px;font-size:11px;color:#3b82f6;text-decoration:none" title="Open Opportunity">[opp ↗]</a>
+                </td>
+                <td style="padding:9px 10px;font-size:13px;color:#475569;white-space:nowrap">${repName.split(' ')[0]}</td>
+                <td style="padding:9px 10px;text-align:right;font-size:14px;font-weight:700;color:#10b981;white-space:nowrap">${serviceMRR>0?cdFmt(serviceMRR):'—'}</td>
+                <td style="padding:9px 10px;text-align:right;font-size:14px;font-weight:700;color:#3b82f6;white-space:nowrap">${adRev>0?cdFmt(adRev):'—'}</td>
+                <td style="padding:9px 10px;text-align:right;font-size:13px;color:#64748b;white-space:nowrap">${closeD}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Lost deals table -->
+    <div style="background:white;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden">
+      <div style="padding:12px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;background:#fff5f5">
+        <div style="width:9px;height:9px;border-radius:50%;background:#ef4444;flex-shrink:0"></div>
+        <div style="font-size:14px;font-weight:700;color:#b91c1c">Lost Deals — ${curMonthName}</div>
+        <div style="margin-left:auto;font-size:13px;color:#64748b">${lostDetail.length} deal${lostDetail.length!==1?'s':''}</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr>
+              <th style="padding:9px 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;text-align:left;border-bottom:1px solid #f1f5f9;background:#fafafa;white-space:nowrap">Account</th>
+              <th style="padding:9px 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;text-align:left;border-bottom:1px solid #f1f5f9;background:#fafafa;white-space:nowrap">Rep</th>
+              <th style="padding:9px 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;text-align:left;border-bottom:1px solid #f1f5f9;background:#fafafa;white-space:nowrap">Reason Lost</th>
+              <th style="padding:9px 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;text-align:left;border-bottom:1px solid #f1f5f9;background:#fafafa;white-space:nowrap">Competitor</th>
+              <th style="padding:9px 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;text-align:right;border-bottom:1px solid #f1f5f9;background:#fafafa;white-space:nowrap">Close Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lostDetail.length===0?`<tr><td colspan="5" style="padding:20px;text-align:center;color:#94a3b8;font-size:13px">No lost deals this month</td></tr>`:''}
+            ${lostDetail.map(r=>{
+              const sfBase=_sfInstanceUrl||'https://scorpion.lightning.force.com';
+              const acctUrl=`${sfBase}/lightning/r/Account/${r.AccountId}/view`;
+              const oppUrl=`${sfBase}/lightning/r/Opportunity/${r.Id}/view`;
+              const acctName=(r.Account&&r.Account.Name)||r.Name||'—';
+              const repName=ID_NAME[r.OwnerId]||'Unknown';
+              const reason=r.Lost_Reason__c||'—';
+              const competitor=r.Competitor_Lost_To__c||'—';
+              const closeD=r.CloseDate?fmtD(r.CloseDate):'—';
+              return `<tr style="border-bottom:1px solid #f8fafc">
+                <td style="padding:9px 14px;white-space:nowrap">
+                  <a href="${acctUrl}" target="_blank" style="color:#0f172a;font-weight:600;font-size:14px;text-decoration:none" title="Open Account in Salesforce">${acctName}</a>
+                  <a href="${oppUrl}" target="_blank" style="margin-left:6px;font-size:11px;color:#3b82f6;text-decoration:none" title="Open Opportunity">[opp ↗]</a>
+                </td>
+                <td style="padding:9px 10px;font-size:13px;color:#475569;white-space:nowrap">${repName.split(' ')[0]}</td>
+                <td style="padding:9px 10px;font-size:13px;color:#334155;max-width:200px;white-space:normal">${reason}</td>
+                <td style="padding:9px 10px;font-size:13px;color:#ef4444;white-space:nowrap">${competitor!=='—'?competitor:'—'}</td>
+                <td style="padding:9px 10px;text-align:right;font-size:13px;color:#64748b;white-space:nowrap">${closeD}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('main').innerHTML=html;
+
+  setTimeout(()=>{
+    const labels=ALL_REPS.map(r=>r.name.split(' ')[0]);
+    const curUnitsArr=ALL_REPS.map(r=>(curMap[r.id]||{units:0}).units);
+    const prevUnitsArr=ALL_REPS.map(r=>(prevMap[r.id]||{units:0}).units);
+
+    if(_cdCharts.cur){_cdCharts.cur.destroy();delete _cdCharts.cur;}
+    if(_cdCharts.prev){_cdCharts.prev.destroy();delete _cdCharts.prev;}
+
+    const cCur=document.getElementById('cdDonutCur');
+    if(cCur){
+      if(curTotalUnits>0){
+        _cdCharts.cur=new Chart(cCur.getContext('2d'),{
+          type:'doughnut',
+          data:{labels,datasets:[{data:curUnitsArr,backgroundColor:repColors,borderWidth:1,borderColor:'white'}]},
+          options:{responsive:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw} units`}}}}
+        });
+      } else {
+        const ctx=cCur.getContext('2d');
+        ctx.fillStyle='#e2e8f0';ctx.beginPath();ctx.arc(90,90,80,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#94a3b8';ctx.font='16px sans-serif';ctx.textAlign='center';ctx.fillText('No data',90,94);
+      }
+    }
+
+    const cPrev=document.getElementById('cdDonutPrev');
+    if(cPrev){
+      if(prevTotalUnits>0){
+        _cdCharts.prev=new Chart(cPrev.getContext('2d'),{
+          type:'doughnut',
+          data:{labels,datasets:[{data:prevUnitsArr,backgroundColor:repColors,borderWidth:1,borderColor:'white'}]},
+          options:{responsive:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw} units`}}}}
+        });
+      } else {
+        const ctx=cPrev.getContext('2d');
+        ctx.fillStyle='#e2e8f0';ctx.beginPath();ctx.arc(90,90,80,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#94a3b8';ctx.font='16px sans-serif';ctx.textAlign='center';ctx.fillText('No data',90,94);
+      }
+    }
+  },60);
+}
+
+// ── PIPELINE OVERVIEW CHARTS (below activity table) ───────────────────────────
+function pipelineOverviewHTML(reps, t){
+  const totalUnits = (t.props||0)+(t.fcst||0)+(t.dpCnt||0);
+  const totalMRR   = (t.pMRR||0)+(t.fMRR||0)+(t.dpMRR||0);
+  const isDay=subView==='today'||subView==='date';
+  return `<div style="margin-top:12px">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:8px">Current Open Pipeline${isDay?' <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8">(current week — pipeline uses weekly minimum for single-day views)</span>':''}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="chart-card">
+        <div class="chart-card-hdr">
+          <span class="chart-card-title">Open Opps by Stage</span>
+          <span style="font-size:10px;color:#94a3b8">${totalUnits} units total</span>
+        </div>
+        <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px;justify-content:center;min-height:200px">
+          ${pipelineFunnelHTML(t.dpCnt||0,t.props||0,t.fcst||0,'units')}
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-hdr">
+          <span class="chart-card-title">Open MRR by Stage</span>
+          <span style="font-size:10px;color:#94a3b8">${fmtMRR(totalMRR)} total</span>
+        </div>
+        <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px;justify-content:center;min-height:200px">
+          ${pipelineFunnelHTML(t.dpMRR||0,t.pMRR||0,t.fMRR||0,'mrr')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function pipelineFunnelHTML(disc, prop, fcst, mode){
+  const fmt = mode==='mrr' ? v=>fmtMRR(v) : v=>v.toLocaleString();
+  const total = disc+prop+fcst||1;
+  const stages = [
+    {lbl:'Discovery', val:disc, color:'#f59e0b', bg:'#fef9ec'},
+    {lbl:'Proposal',  val:prop, color:'#3b82f6', bg:'#eff6ff'},
+    {lbl:'Forecast',  val:fcst, color:'#8b5cf6', bg:'#f5f3ff'},
+  ];
+  return stages.map(s=>{
+    const pctW = Math.round(s.val/total*100);
+    const barW = Math.max(pctW, s.val>0?8:0);
+    return `<div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:11px;font-weight:700;color:${s.color}">${s.lbl}</span>
+        <span style="font-size:12px;font-weight:800;color:#0f172a">${s.val>0?fmt(s.val):'—'}</span>
+      </div>
+      <div style="height:32px;background:#f1f5f9;border-radius:6px;overflow:hidden;position:relative">
+        <div style="height:100%;width:${barW}%;background:${s.color};border-radius:6px;display:flex;align-items:center;padding-left:10px;min-width:${s.val>0?'32px':'0'}">
+          ${s.val>0?`<span style="font-size:10px;font-weight:700;color:white">${pctW}%</span>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
+// ── SELLER SCORECARDS ─────────────────────────────────────────────────────────
+function sellerScoreCardHTML(r, range){
+  const isDay  = subView==='today'||subView==='date';
+  const isWeek = subView==='week';
+  const wd     = range.wd||1;
+  // Per-rep targets from SF User profile (fall back to T config if not set)
+  const callsDay   = r.callsDay   ||T.CALLS_DAY;
+  const emailsWeek = r.emailsWeek ||T.EMAILS_WEEK;
+  const emailsDay  = Math.round(emailsWeek/5);
+  const dialTgt  = isDay?callsDay   : isWeek?callsDay*5  : callsDay*wd;
+  const emailTgt = isDay?emailsDay  : isWeek?emailsWeek  : emailsDay*wd;
+  const touchTgt = dialTgt+emailTgt;
+  const touches  = (r.dials||0)+(r.emails||0);
+
+  function pctVal(v,tgt){ return tgt>0?Math.round(v/tgt*100):0; }
+  function pctBadge(v,tgt){
+    const p=pctVal(v,tgt);
+    const cls=p>=100?'sc-pct-hi':p>=70?'sc-pct-ok':'sc-pct-lo';
+    return `<span class="sc-pct ${cls}">${p}%</span>`;
+  }
+  function barRow(label,val,tgt,color){
+    const fillW=tgt>0?Math.min(Math.round(val/tgt*100),100):0;
+    return `<div class="sc-bar-row">
+      <div class="sc-bar-lbl">${label}</div>
+      <div class="sc-bar-track"><div class="sc-bar-fill" style="width:${fillW}%;background:${color}"></div></div>
+      <div class="sc-bar-nums">${val.toLocaleString()} / ${tgt.toLocaleString()}</div>
+      ${pctBadge(val,tgt)}
+    </div>`;
+  }
+
+  const teamCfg=TEAMS[r.team]||{};
+  const teamColor=teamCfg.color||'#64748b';
+
+  function statBox(n,lbl){
+    return `<div class="sc-stat">
+      <div class="sc-stat-n">${n}</div>
+      <div class="sc-stat-lbl">${lbl}</div>
+    </div>`;
+  }
+
+  return `<div class="sc-card">
+    <div class="sc-card-hdr">
+      <div>
+        <div class="sc-rep-name" style="color:${teamColor}">${r.name}</div>
+        <div class="sc-rep-team">${teamCfg.name||''}</div>
+      </div>
+      <div class="sc-tgt-lbl">${callsDay} calls / ${emailsDay} emails<br>per day</div>
+    </div>
+    <div class="sc-bars">
+      ${barRow('Dials',r.dials||0,dialTgt,'#f59e0b')}
+      ${barRow('Emails',r.emails||0,emailTgt,'#10b981')}
+      ${barRow('Total Touches',touches,touchTgt,'#3b82f6')}
+    </div>
+    <div class="sc-stats">
+      ${statBox(r.disc||0,'Disc. Set')}
+      ${statBox(r.held||0,'Disc Com')}
+      ${statBox(r.props||0,'Prop. Set')}
+      ${statBox(r.won||0,'Prop Com')}
+      ${statBox(r.disc||0,'Opps New')}
+    </div>
+  </div>`;
+}
+
+function sellerScorecardsHTML(reps, range){
+  const sorted=[...reps].sort((a,b)=>{
+    if(a.team!==b.team) return a.team==='tippets'?-1:1;
+    return (b.dials||0)-(a.dials||0);
+  });
+  return `<div class="sc-section">
+    <div class="sc-section-hdr">Seller Scorecards</div>
+    <div class="sc-grid">
+      ${sorted.map(r=>sellerScoreCardHTML(r,range)).join('')}
+    </div>
+  </div>`;
+}
+
+// ── CELL HELPERS ──────────────────────────────────────────────────────────────
+const pcc=(p,hi,mid)=>p>=hi?'hi':p>=mid?'mid':p>0?'lo':'dim';
+function wcCell(a,tgt){
+  const p=tgt>0?Math.min(a/tgt,1):0;
+  const col=p>=1?'#10b981':p>=.7?'#f59e0b':'#ef4444';
+  const cls=p>=1?'hi':p>=.7?'mid':'lo';
+  return `<td><div class="wc-wrap"><span class="wc-nums ${a>0?cls:'dim'}">${a}<span class="wc-tgt">/${tgt}</span></span><div class="wc-bar"><div class="wc-fill" style="width:${Math.round(p*100)}%;background:${col}"></div></div></div></td>`;
+}
+
+// ── EVENTS ────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    mainTab=btn.dataset.tab;
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('sub-filter-bar').style.display = mainTab!=='compare'?'flex':'none';
+    document.getElementById('cmp-filter-bar').style.display = mainTab==='compare'?'flex':'none';
+    if(mainTab==='compare')updateCmpRangeLabel();
+    load();
+  });
+});
+
+// Default day-picker to today
+document.getElementById('day-picker').value = tod();
+
+// Build year picker (last 4 years + current)
+(function(){
+  const sel=document.getElementById('year-picker');
+  const curY=new Date().getFullYear();
+  for(let y=curY;y>=curY-3;y--){
+    const o=document.createElement('option');
+    o.value=String(y);o.textContent=String(y);
+    if(y===curY)o.selected=true;
+    sel.appendChild(o);
+  }
+})();
+
+function updatePickers(){
+  document.getElementById('date-filter').style.display    = subView==='date'    ?'flex':'none';
+  document.getElementById('fsep-date').style.display      = subView==='date'    ?'block':'none';
+  document.getElementById('month-filter').style.display   = subView==='month'   ?'flex':'none';
+  document.getElementById('fsep-month').style.display     = subView==='month'   ?'block':'none';
+  document.getElementById('quarter-filter').style.display = subView==='quarter' ?'flex':'none';
+  document.getElementById('fsep-quarter').style.display   = subView==='quarter' ?'block':'none';
+  document.getElementById('year-filter').style.display    = subView==='year'    ?'flex':'none';
+  document.getElementById('fsep-year').style.display      = subView==='year'    ?'block':'none';
+}
+document.querySelectorAll('.vpill').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    subView=btn.dataset.view;
+    document.querySelectorAll('.vpill').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    updatePickers();
+    load();
+  });
+});
+
+document.getElementById('day-picker').addEventListener('change',load);
+document.getElementById('month-picker').addEventListener('change',load);
+document.getElementById('quarter-picker').addEventListener('change',load);
+document.getElementById('year-picker').addEventListener('change',load);
+document.getElementById('cmp-select').addEventListener('change',function(){
+  cmpMode=this.value;
+  document.getElementById('cmp-month-wrap').style.display=cmpMode==='mom'?'flex':'none';
+  updateCmpRangeLabel();load();
+});
+document.getElementById('cmp-month-picker').addEventListener('change',()=>{updateCmpRangeLabel();load();});
+
+// ── JS TOOLTIP ENGINE ────────────────────────────────────────────────────────
+(function(){
+  const tt=document.createElement('div');
+  tt.id='g-tip';
+  document.body.appendChild(tt);
+  document.addEventListener('mouseover',e=>{
+    const el=e.target.closest('[data-tip]');
+    if(!el)return;
+    tt.textContent=el.dataset.tip;
+    tt.style.opacity='1';
+  });
+  document.addEventListener('mousemove',e=>{
+    if(tt.style.opacity==='1'){
+      const x=Math.min(e.clientX+12,window.innerWidth-tt.offsetWidth-8);
+      const y=Math.max(e.clientY-44,8);
+      tt.style.left=x+'px';
+      tt.style.top=y+'px';
+    }
+  });
+  document.addEventListener('mouseout',e=>{
+    const el=e.target.closest('[data-tip]');
+    if(el)tt.style.opacity='0';
+  });
+})();
+
+initAuth();
+</script>
+</body>
+</html>
