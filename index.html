@@ -688,11 +688,21 @@ function sumR(reps){
 async function sf(q){
   const token=storGet('sf_access_token');
   if(!token){showAuthScreen();throw new Error('Not authenticated');}
-  const base=storGet('sf_instance_url')||'https://scorpion.lightning.force.com';
+  const base=storGet('sf_instance_url')||'https://scorpion.my.salesforce.com';
   let records=[];
   let url=`${base}/services/data/v59.0/query?q=${encodeURIComponent(q)}`;
   while(url){
-    const resp=await fetch(url,{headers:{Authorization:`Bearer ${token}`,Accept:'application/json'}});
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),20000); // 20s timeout per page
+    let resp;
+    try{
+      resp=await fetch(url,{signal:ctrl.signal,headers:{Authorization:`Bearer ${token}`,Accept:'application/json'}});
+    }catch(e){
+      clearTimeout(timer);
+      if(e.name==='AbortError') throw new Error('SF API timeout — check that https://joshsmith-cloud.github.io is added to Salesforce CORS allowed origins (Setup → CORS)');
+      throw new Error('SF fetch failed: '+e.message);
+    }
+    clearTimeout(timer);
     if(resp.status===401){storDel('sf_access_token');storDel('sf_instance_url');showAuthScreen('Session expired — please sign in again');throw new Error('401');}
     if(!resp.ok){const t=await resp.text();throw new Error(`SF API error ${resp.status}: ${t.slice(0,300)}`);}
     const d=await resp.json();
@@ -3234,7 +3244,6 @@ function updateShortPills(){
     updatePickers();
   }
 }
-}
 document.querySelectorAll('.vpill').forEach(btn=>{
   btn.addEventListener('click',()=>{
     subView=btn.dataset.view;
@@ -3285,4 +3294,3 @@ initAuth();
 </script>
 </body>
 </html>
-
