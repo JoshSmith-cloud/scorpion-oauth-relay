@@ -22,21 +22,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .tab.active{color:#fff;border-bottom-color:#3b82f6}
 
 /* ── FILTER BAR ── */
-.filter-bar{background:#1e293b;padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;border-top:1px solid #0f172a}
-.view-pills{display:flex;background:#0f172a;border-radius:8px;padding:3px;gap:2px}
-.vpill{padding:5px 14px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;color:#64748b;border:none;background:none;transition:all .15s;white-space:nowrap}
-.vpill.active{background:white;color:#0f172a}
-.vpill:hover:not(.active){color:#94a3b8}
-.filter-sep{width:1px;height:20px;background:#334155}
-.f-ctrl{display:flex;align-items:center;gap:6px}
-.f-ctrl label{font-size:12px;color:#64748b;font-weight:500}
-.f-ctrl select,.f-ctrl input[type="month"]{padding:4px 9px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:white;font-size:14px;font-weight:500;cursor:pointer;appearance:none;-webkit-appearance:none}
-.f-ctrl select{padding-right:24px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center}
-.f-ctrl input::-webkit-calendar-picker-indicator{filter:invert(.5)}
+.filter-bar{background:#0f172a;padding:12px 24px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #1e293b}
+.view-pills{display:flex;background:#1e293b;border-radius:10px;padding:4px;gap:3px}
+.vpill{padding:7px 20px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;color:#64748b;border:none;background:none;transition:all .18s;white-space:nowrap;letter-spacing:.2px}
+.vpill.active{background:#3b82f6;color:#fff;box-shadow:0 1px 4px rgba(59,130,246,.4)}
+.vpill:hover:not(.active){color:#cbd5e1;background:#334155}
+.filter-sep{width:1px;height:22px;background:#1e293b}
+.f-ctrl{display:flex;align-items:center;gap:8px}
+.f-ctrl label{font-size:12px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.f-ctrl select,.f-ctrl input[type="month"]{padding:7px 14px;border-radius:8px;border:1px solid #1e293b;background:#1e293b;color:#e2e8f0;font-size:14px;font-weight:600;cursor:pointer;appearance:none;-webkit-appearance:none;transition:border-color .15s}
+.f-ctrl select:hover,.f-ctrl input[type="month"]:hover{border-color:#334155}
+.f-ctrl select{padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center}
+.f-ctrl input::-webkit-calendar-picker-indicator{filter:invert(.4) brightness(1.5)}
 .cmp-range-lbl{font-size:12px;color:#94a3b8;display:flex;align-items:center;gap:5px}
 .cmp-period-pill{background:#0f172a;color:#e2e8f0;padding:2px 7px;border-radius:4px;font-weight:600;font-size:12px}
 .cmp-vs{color:#475569;font-size:11px}
-.status-pill{font-size:12px;color:#475569;background:#0f172a;padding:4px 10px;border-radius:6px;white-space:nowrap}
+.status-pill{font-size:12px;color:#475569;background:#1e293b;padding:5px 12px;border-radius:8px;white-space:nowrap;border:1px solid #1e293b}
 
 /* ── LOADING ── */
 .loading{display:flex;align-items:center;justify-content:center;min-height:280px;flex-direction:column;gap:10px}
@@ -48,7 +49,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .prog-fill{height:100%;background:#3b82f6;border-radius:2px;transition:width .3s}
 
 /* ── MAIN ── */
-.main{padding:14px 20px;max-width:1400px;margin:0 auto}
+.main{padding:14px 20px;max-width:1470px;margin:0 auto}
 
 /* ── TOOLTIPS (JS-driven, fixed position — avoids table overflow clipping) ── */
 .tip{cursor:default}
@@ -322,7 +323,9 @@ tr.acc-rep-row:hover td{background:#fafafa}
 /* ── SELLER SCORECARDS ── */
 .sc-section{margin-top:16px}
 .sc-section-hdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:8px}
-.sc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:960px){.sc-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.sc-grid{grid-template-columns:1fr}}
 .sc-card{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e8f0}
 .sc-card-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
 .sc-rep-name{font-size:15px;font-weight:800;line-height:1.1}
@@ -342,6 +345,17 @@ tr.acc-rep-row:hover td{background:#fafafa}
 .sc-stat{text-align:center;padding:2px 0}
 .sc-stat-n{font-size:19px;font-weight:900;color:#0f172a;line-height:1}
 .sc-stat-lbl{font-size:9px;color:#94a3b8;margin-top:3px;line-height:1.2}
+
+/* ── CONVERSIONS ACCORDION ── */
+.conv-team-section{margin-bottom:16px}
+.conv-team-hdr{display:flex;align-items:center;gap:8px;padding:9px 14px;background:#f8fafc;border-radius:8px;cursor:pointer;margin-bottom:8px;border:1px solid #e2e8f0;user-select:none;transition:background .15s}
+.conv-team-hdr:hover{background:#f0f4f8}
+.conv-team-toggle{font-size:11px;color:#94a3b8;transition:transform .2s;display:inline-block}
+.conv-team-toggle.collapsed{transform:rotate(-90deg)}
+.conv-team-name{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.conv-team-count{font-size:11px;color:#94a3b8;margin-left:auto}
+.conv-team-body{overflow:hidden;transition:max-height .3s ease}
+.conv-team-body.collapsed{display:none}
 </style>
 </head>
 <body>
@@ -370,6 +384,7 @@ tr.acc-rep-row:hover td{background:#fafafa}
 <div class="tab-nav">
   <button class="tab active" data-tab="gm">GM Rollup</button>
   <button class="tab" data-tab="activity">Activity</button>
+  <button class="tab" data-tab="conversions">Conversions</button>
   <button class="tab" data-tab="compare">Comparison</button>
   <button class="tab" data-tab="yearly">Yearly</button>
   <button class="tab" data-tab="closed">Closed Deals</button>
@@ -380,8 +395,8 @@ tr.acc-rep-row:hover td{background:#fafafa}
   <div class="view-pills">
     <button class="vpill" data-view="today">Today</button>
     <button class="vpill" data-view="date">Date</button>
-    <button class="vpill active" data-view="week">This Week</button>
-    <button class="vpill" data-view="month">Month</button>
+    <button class="vpill" data-view="week">This Week</button>
+    <button class="vpill active" data-view="month">Month</button>
     <button class="vpill" data-view="quarter">Quarter</button>
     <button class="vpill" data-view="year">Year</button>
   </div>
@@ -598,7 +613,7 @@ let _latestActMap={};
 let mainTab = 'gm';
 let _sfInstanceUrl = '';
 let _chartInstance = null;
-let subView = 'week'; // 'today' | 'date' | 'week' | 'month' | 'quarter' | 'year'
+let subView = 'month'; // 'today' | 'date' | 'week' | 'month' | 'quarter' | 'year'
 let cmpMode = 'wow';
 let _repScoreData = {}; // repId → {rep, quota, range}
 let _repScoreRange = null;
@@ -655,6 +670,7 @@ function sumR(reps){
     dials:    a.dials+(r.dials||0),
     emails:   a.emails+(r.emails||0),
     connects: a.connects+(r.connects||0),
+    meetSet:  a.meetSet+(r.meetSet||0),
     disc:     a.disc+(r.disc||0),
     held:     a.held+(r.held||0),
     mSched:   a.mSched+(r.mSched||0),
@@ -664,10 +680,11 @@ function sumR(reps){
     fMRR:     a.fMRR+(r.fMRR||0),
     won:      a.won+(r.won||0),
     wMRR:     a.wMRR+(r.wMRR||0),
+    splitMRR: a.splitMRR+(r.splitMRR||0),
     lost:     a.lost+(r.lost||0),
     dpMRR:    a.dpMRR+(r.dpMRR||0),
     dpCnt:    a.dpCnt+(r.dpCnt||0),
-  }),{dials:0,emails:0,connects:0,disc:0,held:0,mSched:0,props:0,pMRR:0,fcst:0,fMRR:0,won:0,wMRR:0,lost:0,dpMRR:0,dpCnt:0});
+  }),{dials:0,emails:0,connects:0,meetSet:0,disc:0,held:0,mSched:0,props:0,pMRR:0,fcst:0,fMRR:0,won:0,wMRR:0,splitMRR:0,lost:0,dpMRR:0,dpCnt:0});
 }
 async function sf(q){
   const token=storGet('sf_access_token');
@@ -813,6 +830,7 @@ async function load(){
   if(mainTab==='gm'){await loadGM();return;}
   if(mainTab==='yearly'){await loadYearly();return;}
   if(mainTab==='closed'){await loadClosed();return;}
+  if(mainTab==='conversions'){await loadConversions();return;}
   await loadActivity();
 }
 
@@ -860,24 +878,23 @@ async function fetchActivity(range){
   // Includes TaskSubtype='Call' (dialer) + TaskSubtype='Task' with Type='Call'/'Manual Call' (manual logs)
   // Manual call records typically have no CallDisposition → counted as dials only, not connects
   prog('Calls… 1/8',1,8);
-  const callRecs=await sf(`SELECT OwnerId,CallDisposition,COUNT(Id) total FROM Task WHERE (TaskSubtype='Call' OR (TaskSubtype='Task' AND Type IN ('Call','Manual Call'))) AND OwnerId IN (${ALL_IDS}) AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z GROUP BY OwnerId,CallDisposition`);
+  const callRecs=await sf(`SELECT OwnerId,CallDisposition,COUNT(Id) total FROM Task WHERE (TaskSubtype='Call' OR (TaskSubtype='Task' AND Type IN ('Call','Manual Call'))) AND OwnerId IN (${ALL_IDS}) AND ActivityDate>=${start} AND ActivityDate<=${end} GROUP BY OwnerId,CallDisposition`);
 
   prog('Emails… 2/8',2,8);
-  const emailRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Task WHERE TaskSubtype='Email' AND OwnerId IN (${ALL_IDS}) AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z GROUP BY OwnerId`);
+  const emailRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Task WHERE TaskSubtype='Email' AND OwnerId IN (${ALL_IDS}) AND ActivityDate>=${start} AND ActivityDate<=${end} GROUP BY OwnerId`);
 
   // mSched + held merged into one query (split by Outcome__c in JS)
   prog('Meetings… 3/8',3,8);
   const meetRecs=await sf(`SELECT OwnerId,Outcome__c,COUNT(Id) cnt FROM Event WHERE OwnerId IN (${ALL_IDS}) AND Type='Meeting' AND ActivityDate>=${start} AND ActivityDate<=${end} GROUP BY OwnerId,Outcome__c`);
 
-  prog('1SEO filter… 4/8',4,8);
-  const seoAll=await sf(`SELECT Id FROM Opportunity WHERE OwnerId IN ('0055f00000AWG5wAAH','005Rj00000GpYeNIAV') AND Name LIKE '%1SEO%'`).catch(()=>[]);
-  // Aggregate calls: total dials = all call tasks; connects = those with connect dispositions
+  // Aggregate calls: total dials = all call tasks; connects = those with connect dispositions; meetSet = 'Answered - Meeting Set'
   const CONN_SET=new Set(['Answered - Not Interested','Answered - Follow Up','Answered - Meeting Set','Answered - Wrong Contact']);
-  const dialMap={},connMap={};
+  const dialMap={},connMap={},meetSetMap={};
   for(const r of callRecs){
     const o=r.OwnerId,n=r.total||0;
     dialMap[o]=(dialMap[o]||0)+n;
     if(CONN_SET.has(r.CallDisposition))connMap[o]=(connMap[o]||0)+n;
+    if(r.CallDisposition==='Answered - Meeting Set')meetSetMap[o]=(meetSetMap[o]||0)+n;
   }
   const emailMap=toMap(emailRecs,'OwnerId','total');
   // Aggregate meetings: mSched = all meetings; held = Outcome__c='Completed'
@@ -888,22 +905,33 @@ async function fetchActivity(range){
     if(r.Outcome__c==='Completed')heldMap[o]=(heldMap[o]||0)+n;
   }
 
-  // Build 1SEO exclusion clause from pre-fetch result
-  let seoExclude='';
-  if(seoAll.length>0){
-    const ids=seoAll.map(r=>`'${r.Id}'`).join(',');
-    seoExclude=` AND Id NOT IN (${ids})`;
-  }
+  let seoExclude=''; // 1SEO included — no exclusion applied
 
   // ── Batch 2: opp queries that depend on seoExclude ───────────────────────────
   prog('Sets… 5/8',5,8);
   const discRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Opportunity WHERE OwnerId IN (${ALL_IDS}) AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z${seoExclude} GROUP BY OwnerId`);
 
+  // Pipeline = ALL currently open opps in Discovery/Proposal/Forecast — no date filter.
+  // This represents a rep's active pipeline health, not a point-in-time slice.
   prog('Pipeline… 6/8',6,8);
-  const pipeRecs=await sf(`SELECT OwnerId,StageName,COUNT(Id) total,SUM(Net_MRR__c) mrr FROM Opportunity WHERE StageName IN ('Discovery','Proposal','Forecast') AND IsClosed=false AND CloseDate>=${pipeStart} AND CloseDate<=${pipeEnd} AND OwnerId IN (${ALL_IDS})${seoExclude} GROUP BY OwnerId,StageName`);
+  const pipeRecs=await sf(`SELECT OwnerId,StageName,COUNT(Id) total,SUM(Net_MRR__c) mrr FROM Opportunity WHERE StageName IN ('Discovery','Proposal','Forecast') AND IsClosed=false AND OwnerId IN (${ALL_IDS})${seoExclude} GROUP BY OwnerId,StageName`);
 
   prog('Won… 7/8',7,8);
   const wonRecs=await sf(`SELECT OwnerId,COUNT(Id) total,SUM(Monthly_Recurring_Revenue__c) mrr FROM Opportunity WHERE IsWon=true AND CloseDate>=${start} AND CloseDate<=${end} AND OwnerId IN (${ALL_IDS})${seoExclude} GROUP BY OwnerId`);
+
+  prog('Splits… 7/8',7,8);
+  // Revenue splits: compute allocation as SplitPercentage * Opportunity.Net_MRR__c
+  // so attribution reflects the actual agreed split %, not SF's Amount-based SplitAmount.
+  let splitMap={};
+  try{
+    const splitRecs=await sf(`SELECT SplitOwnerId,SplitPercentage,Opportunity.Net_MRR__c FROM OpportunitySplit WHERE Opportunity.IsWon=true AND Opportunity.CloseDate>=${start} AND Opportunity.CloseDate<=${end} AND SplitOwnerId IN (${ALL_IDS}) AND SplitType.MasterLabel='Revenue'`);
+    for(const s of splitRecs){
+      if(s.SplitOwnerId){
+        const alloc=(s.SplitPercentage/100)*(s.Opportunity?.Net_MRR__c||0);
+        splitMap[s.SplitOwnerId]=(splitMap[s.SplitOwnerId]||0)+alloc;
+      }
+    }
+  }catch(e){/* OpportunitySplit not enabled — fall back to full wMRR */}
 
   prog('Lost… 8/8',8,8);
   const lostRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Opportunity WHERE IsClosed=true AND IsWon=false AND CloseDate>=${start} AND CloseDate<=${end} AND OwnerId IN (${ALL_IDS})${seoExclude} GROUP BY OwnerId`);
@@ -925,8 +953,10 @@ async function fetchActivity(range){
     const fcst=fcstCnt[r.id]||0,fMRR=fcstMRR[r.id]||0;
     const won=wonCnt[r.id]||0,wMRR=wonMRR[r.id]||0,lost=lostMap[r.id]||0;
     const held=heldMap[r.id]||0,mSched=mSchedMap[r.id]||0;
+    // splitMRR: if OpportunitySplit exists use it; otherwise fall back to full wMRR
+    const splitMRR=Object.keys(splitMap).length>0?(splitMap[r.id]||0):wMRR;
     return{id:r.id,name:r.name,team:ID_TEAM[r.id],
-      dials,emails,connects,disc,held,mSched,props,pMRR,fcst,fMRR,won,wMRR,lost,
+      dials,emails,connects,meetSet:meetSetMap[r.id]||0,disc,held,mSched,props,pMRR,fcst,fMRR,won,wMRR,splitMRR,lost,
       dpMRR:dpMRRmap[r.id]||0,
       dpCnt:dpCntmap[r.id]||0,
       connPct:pct(connects,dials),discPct:pct(disc,connects),holdPct:pct(held,mSched),winPct:pct(won,won+lost)};
@@ -947,7 +977,7 @@ async function fetchGMExtras(){
   prog('Top opportunities… 8/10',8,10);
   // Top opps: fetch more than needed, filter 1SEO in JS (SOQL can't do NOT LIKE)
   const _SEO_OWN=['0055f00000AWG5wAAH','005Rj00000GpYeNIAV'];
-  const _filterSeo=arr=>arr.filter(o=>!(_SEO_OWN.includes(o.OwnerId)&&o.Name&&o.Name.includes('1SEO')));
+  const _filterSeo=arr=>arr; // 1SEO included — pass through unfiltered
   let topOpps=[];
   try{
     const raw=await sf(`SELECT Id,Name,StageName,Monthly_Recurring_Revenue__c,LastActivityDate,CreatedDate,OwnerId,(SELECT Contact.Name FROM OpportunityContactRoles WHERE IsPrimary=true LIMIT 1) FROM Opportunity WHERE IsClosed=false AND OwnerId IN (${ALL_IDS}) ORDER BY Monthly_Recurring_Revenue__c DESC NULLS LAST LIMIT 50`);
@@ -1071,6 +1101,391 @@ function render(range,reps,quotaMap={}){
     </div>`;
 }
 
+// ── CONVERSIONS TAB ───────────────────────────────────────────────────────────
+function getPriorRange(range){
+  const fmt=d=>d.toISOString().slice(0,10);
+  if(subView==='month'){
+    const d=new Date(range.start+'T12:00:00');
+    d.setMonth(d.getMonth()-1);
+    const y=d.getFullYear(),m=d.getMonth()+1;
+    const last=new Date(y,m,0).getDate();
+    return{start:`${y}-${String(m).padStart(2,'0')}-01`,end:`${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`,label:'Prior Month',sub:''};
+  }
+  if(subView==='quarter'){
+    const d=new Date(range.start+'T12:00:00');d.setMonth(d.getMonth()-3);
+    const qM=Math.floor(d.getMonth()/3)*3,y=d.getFullYear();
+    return{start:fmt(new Date(y,qM,1)),end:fmt(new Date(y,qM+3,0)),label:'Prior Quarter',sub:''};
+  }
+  if(subView==='year'){
+    const y=parseInt(range.start.slice(0,4))-1;
+    return{start:`${y}-01-01`,end:`${y}-12-31`,label:'Prior Year',sub:''};
+  }
+  const s=new Date(range.start+'T12:00:00'),e=new Date(range.end+'T12:00:00');
+  const days=Math.round((e-s)/86400000)+1;
+  const pe=new Date(s);pe.setDate(pe.getDate()-1);
+  const ps=new Date(pe);ps.setDate(ps.getDate()-days+1);
+  return{start:fmt(ps),end:fmt(pe),label:'Prior Period',sub:''};
+}
+
+async function loadConversions(){
+  const range=getRange(),prior=_convCmpRange||getPriorRange(range);
+  document.getElementById('main').innerHTML=`<div class="loading"><div class="spinner"></div><div class="load-label">Conversions — ${range.label}</div><div class="load-step" id="progress">Fetching activity…</div><div class="prog-bar"><div class="prog-fill" id="pbar" style="width:5%"></div></div></div>`;
+  setStatus('Loading…');
+  try{
+    const reps=await fetchActivity(range);
+    prog('Prior period…',45,100);
+    const priorReps=await fetchActivity(prior);
+    prog('Proposal history…',75,100);
+    const psRecs=await sf(`SELECT OpportunityId,Opportunity.OwnerId FROM OpportunityHistory WHERE StageName='Proposal' AND CreatedDate>=${range.start}T00:00:00Z AND CreatedDate<=${range.end}T23:59:59Z AND Opportunity.OwnerId IN (${ALL_IDS})`).catch(()=>[]);
+    const phRecs=await sf(`SELECT OpportunityId,Opportunity.OwnerId FROM OpportunityHistory WHERE StageName='Forecast' AND CreatedDate>=${range.start}T00:00:00Z AND CreatedDate<=${range.end}T23:59:59Z AND Opportunity.OwnerId IN (${ALL_IDS})`).catch(()=>[]);
+    const pPsRecs=await sf(`SELECT OpportunityId,Opportunity.OwnerId FROM OpportunityHistory WHERE StageName='Proposal' AND CreatedDate>=${prior.start}T00:00:00Z AND CreatedDate<=${prior.end}T23:59:59Z AND Opportunity.OwnerId IN (${ALL_IDS})`).catch(()=>[]);
+    const pPhRecs=await sf(`SELECT OpportunityId,Opportunity.OwnerId FROM OpportunityHistory WHERE StageName='Forecast' AND CreatedDate>=${prior.start}T00:00:00Z AND CreatedDate<=${prior.end}T23:59:59Z AND Opportunity.OwnerId IN (${ALL_IDS})`).catch(()=>[]);
+    let quotaMap={};try{quotaMap=await fetchQuotaData();}catch(e){}
+    const ownerMap=arr=>{const m={};for(const r of arr){const id=r.Opportunity?.OwnerId;if(id)m[id]=(m[id]||0)+1;}return m;};
+    prog('Rendering…',95,100);
+    renderConversions(range,reps,ownerMap(psRecs),ownerMap(phRecs),prior,priorReps,ownerMap(pPsRecs),ownerMap(pPhRecs),quotaMap);
+  }catch(err){
+    document.getElementById('main').innerHTML=`<div class="err">⚠️ ${err.message||err}</div>`;
+  }
+  setStatus(new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+}
+
+// ── CONVERSION GLOBALS ────────────────────────────────────────────────────────
+let _lastConvData = null;
+let _convShowComparison = false;
+let _convCmpType = 'auto';  // 'auto'|'month'|'quarter'|'year'
+let _convCmpRange = null;   // null = use getPriorRange(); set = custom prior
+
+function toggleConvTeam(team){
+  const body=document.getElementById('conv-body-'+team);
+  const tog=document.getElementById('conv-toggle-'+team);
+  if(!body||!tog)return;
+  const collapsed=body.classList.toggle('collapsed');
+  tog.classList.toggle('collapsed',collapsed);
+}
+
+function toggleConvComparison(){
+  _convShowComparison=!_convShowComparison;
+  if(_lastConvData){
+    const{range,reps,psMap,phMap,prior,priorReps,pPsMap,pPhMap,quotaMap}=_lastConvData;
+    renderConversions(range,reps,psMap,phMap,prior,priorReps,pPsMap,pPhMap,quotaMap);
+  }
+}
+
+function onConvCmpTypeChange(){
+  const sel=document.getElementById('conv-cmp-type-sel');
+  if(!sel)return;
+  _convCmpType=sel.value;
+  ['month','quarter','year'].forEach(v=>{
+    const w=document.getElementById('conv-cmp-'+v+'-wrap');
+    if(w)w.style.display=_convCmpType===v?'flex':'none';
+  });
+  if(_convCmpType==='auto'){_convCmpRange=null;loadConversions();}
+}
+
+function onConvCmpPeriodChange(){
+  const t=_convCmpType;
+  const fmt=d=>d.toISOString().slice(0,10);
+  if(t==='month'){
+    const v=document.getElementById('conv-cmp-month-inp')?.value;
+    if(!v)return;
+    const [y,m]=v.split('-').map(Number);
+    const last=new Date(y,m,0).getDate();
+    const ms=String(m).padStart(2,'0');
+    _convCmpRange={start:`${y}-${ms}-01`,end:`${y}-${ms}-${String(last).padStart(2,'0')}`,label:`${MONTHS[m-1]} ${y}`,sub:''};
+  } else if(t==='quarter'){
+    const v=document.getElementById('conv-cmp-quarter-sel')?.value;
+    if(!v)return;
+    const [qy,qn]=v.split('-Q');
+    const qi=parseInt(qn)-1;
+    const qM=[0,3,6,9][qi];
+    _convCmpRange={start:fmt(new Date(parseInt(qy),qM,1)),end:fmt(new Date(parseInt(qy),qM+3,0)),label:`Q${qn} ${qy}`,sub:''};
+  } else if(t==='year'){
+    const v=document.getElementById('conv-cmp-year-sel')?.value;
+    if(!v)return;
+    _convCmpRange={start:`${v}-01-01`,end:`${v}-12-31`,label:String(v),sub:''};
+  }
+  loadConversions();
+}
+
+function renderConversions(range,reps,psMap,phMap,prior,priorReps,pPsMap,pPhMap,quotaMap={}){
+  _lastConvData={range,reps,psMap,phMap,prior,priorReps,pPsMap,pPhMap,quotaMap};
+  const DIAL_TARGET=55,REV_PER_DIAL=16;
+  const days=Math.max(workdays(range.start,range.end),1);
+  const showCmp=_convShowComparison;
+
+  const rat=(n,d)=>d>0?+(n/d).toFixed(1):null;
+  const ratStr=v=>v===null?'—':(v>=10?Math.round(v)+':1':v.toFixed(1)+':1');
+  const pct2=(n,d)=>d>0?Math.round(n/d*100):0;
+  const dArr=(cv,pv,lb)=>{
+    if(!showCmp)return '';
+    if(pv===null||pv===0||cv===null)return '';
+    const d=(cv-pv)/pv;
+    if(Math.abs(d)<0.08)return '<span style="color:#94a3b8;font-size:9px">—</span>';
+    const good=lb?d<0:d>0;
+    return `<span style="color:${good?'#10b981':'#ef4444'};font-size:9px">${good?'↑':'↓'}${Math.abs(Math.round(d*100))}%</span>`;
+  };
+  const cntArr=(cv,pv)=>{
+    if(!showCmp)return '';
+    if(!pv)return '';
+    const d=cv-pv;
+    if(d===0)return '<span style="color:#94a3b8;font-size:9px">—</span>';
+    return `<span style="color:${d>0?'#10b981':'#ef4444'};font-size:9px">${d>0?'+':''}${d}</span>`;
+  };
+
+  const buildF=(r,psM,phM)=>({
+    dials:r.dials||0,sets:r.mSched||0,holds:r.held||0,opps:r.disc||0,
+    propsSet:psM[r.id]||0,propsHeld:phM[r.id]||0,won:r.won||0,
+    wMRR:r.wMRR||0,splitMRR:r.splitMRR||0,lost:r.lost||0,meetSet:r.meetSet||0
+  });
+
+  const autoCallout=(f,pf)=>{
+    if(!showCmp)return '';
+    const stages=[
+      ['Dial→Set',rat(f.dials,f.sets),rat(pf.dials,pf.sets)],
+      ['Set→Hold',rat(f.sets,f.holds),rat(pf.sets,pf.holds)],
+      ['Hold→Opp',rat(f.holds,f.opps),rat(pf.holds,pf.opps)],
+      ['Opp→Prop',rat(f.opps,f.propsSet),rat(pf.opps,pf.propsSet)],
+      ['Prop→Won',rat(f.propsSet,f.won),rat(pf.propsSet,pf.won)],
+    ];
+    let bestK='',bestPct=0,worstK='',worstV=0;
+    for(const[k,cv,pv] of stages){
+      if(cv!==null&&pv!==null&&pv>0){
+        const chg=(pv-cv)/pv;
+        if(chg>bestPct){bestPct=chg;bestK=`${k} (${pv.toFixed(1)} → ${cv.toFixed(1)})`;}
+        if(cv>worstV){worstV=cv;worstK=`${k} (${cv.toFixed(1)}:1)`;}
+      }
+    }
+    const parts=[];
+    if(bestK&&bestPct>0.1)parts.push(`<span style="color:#10b981">↑ Improving: ${bestK}</span>`);
+    if(worstK&&worstV>3)parts.push(`<span style="color:#f59e0b">Focus: ${worstK}</span>`);
+    return parts.length?`<div style="font-size:11px;color:#64748b;min-height:16px;margin-bottom:4px">${parts.join(' &nbsp;·&nbsp; ')}</div>`:'';
+  };
+
+  const focusArea=(f)=>{
+    const checks=[
+      {stage:'getting meetings set',ratio:f.dials>0&&f.sets>0?f.dials/f.sets:null,threshold:30,tip:'More dials or refine opener'},
+      {stage:'holding meetings',ratio:f.sets>0&&f.holds>0?f.sets/f.holds:null,threshold:2,tip:'Confirm meetings same-day'},
+      {stage:'creating opps from held meetings',ratio:f.holds>0&&f.opps>0?f.holds/f.opps:null,threshold:2,tip:'Improve discovery questions'},
+      {stage:'advancing opps to proposal',ratio:f.opps>0&&f.propsSet>0?f.opps/f.propsSet:null,threshold:3,tip:'Tighter follow-up cadence'},
+      {stage:'closing proposals',ratio:f.propsSet>0&&f.won>0?f.propsSet/f.won:null,threshold:3,tip:'Strengthen proposal delivery'},
+    ];
+    const blocked=checks.find(c=>c.ratio===null&&(
+      (c.stage.includes('meetings set')&&f.dials>0)||
+      (c.stage.includes('holding')&&f.sets>0)||
+      (c.stage.includes('creating')&&f.holds>0)||
+      (c.stage.includes('advancing')&&f.opps>0)||
+      (c.stage.includes('closing')&&f.propsSet>0)
+    ));
+    if(blocked)return `<strong>Focus:</strong> ${blocked.stage} — ${blocked.tip}`;
+    const worst=checks.filter(c=>c.ratio!==null&&c.ratio>c.threshold).sort((a,b)=>b.ratio-a.ratio)[0];
+    if(worst)return `<strong>Focus:</strong> Struggling with ${worst.stage} (${worst.ratio.toFixed(1)}:1) — ${worst.tip}`;
+    if(f.dials===0)return `<strong>Focus:</strong> No dials logged this period`;
+    return null;
+  };
+
+  const repCard=r=>{
+    const f=buildF(r,psMap,phMap);
+    const pRep=priorReps.find(p=>p.id===r.id)||{id:r.id};
+    const pf=buildF(pRep,pPsMap,pPhMap);
+    const tc=TEAMS[r.team]?.color||'#888';
+    const winRate=pct2(f.won,f.won+f.lost);
+    const pWinRate=pct2(pf.won,pf.won+pf.lost);
+    const wrHtml=`<span style="font-size:9px;color:#10b981;margin-left:3px">${winRate}% WR</span>`;
+
+    // ── Funnel stage boxes (Dials → Sets → Holds → Opps → Props → Won | Lost)
+    const stg=[
+      {l:'Dials',v:f.dials,pv:pf.dials,c:'#334155'},
+      {l:'Sets',v:f.sets,pv:pf.sets,c:'#7c3aed'},
+      {l:'Holds',v:f.holds,pv:pf.holds,c:'#0369a1'},
+      {l:'Opps',v:f.opps,pv:pf.opps,c:'#b45309'},
+      {l:'Props',v:f.propsSet,pv:pf.propsSet,c:'#0f766e'},
+      {l:'Won',v:f.won,pv:pf.won,c:'#15803d'},
+    ];
+    const stgBoxes=stg.map((s,i)=>`
+      <div style="flex:1;min-width:52px;text-align:center;background:#f8fafc;border-radius:7px;padding:7px 4px 5px">
+        <div style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;margin-bottom:1px">${s.l}</div>
+        <div style="font-size:20px;font-weight:800;color:${s.c};line-height:1.1">${s.v}${i===5?wrHtml:''}</div>
+        <div style="font-size:9px;min-height:13px">${cntArr(s.v,s.pv)}</div>
+      </div>${i<5?`<div style="color:#cbd5e1;align-self:center;flex-shrink:0;padding:0 2px;font-size:11px">▶</div>`:''}
+    `).join('');
+    const lostBox=`<div style="color:#e2e8f0;align-self:center;padding:0 4px;font-size:11px">|</div>
+      <div style="flex:1;min-width:52px;text-align:center;background:#fff5f5;border-radius:7px;padding:7px 4px 5px;border:1px solid #fee2e2">
+        <div style="font-size:9px;color:#dc2626;text-transform:uppercase;letter-spacing:.4px;margin-bottom:1px">Lost</div>
+        <div style="font-size:20px;font-weight:800;color:#dc2626;line-height:1.1">${f.lost}</div>
+        <div style="font-size:9px;min-height:13px">${cntArr(f.lost,pf.lost)}</div>
+      </div>`;
+
+    // ── Ratio row
+    const ratios=[
+      {l:'D/Set',n:f.dials,d:f.sets,pn:pf.dials,pd:pf.sets,lb:true},
+      {l:'S/Hold',n:f.sets,d:f.holds,pn:pf.sets,pd:pf.holds,lb:true},
+      {l:'H/Opp',n:f.holds,d:f.opps,pn:pf.holds,pd:pf.opps,lb:true},
+      {l:'O/Prop',n:f.opps,d:f.propsSet,pn:pf.opps,pd:pf.propsSet,lb:true},
+      {l:'P/Won',n:f.propsSet,d:f.won,pn:pf.propsSet,pd:pf.won,lb:true},
+    ];
+    const ratBoxes=showCmp?ratios.map(s=>{
+      const v=rat(s.n,s.d),pv=rat(s.pn,s.pd);
+      return `<div style="flex:1;min-width:52px;text-align:center;padding:3px 2px">
+        <div style="font-size:9px;color:#94a3b8">${s.l}</div>
+        <div style="font-size:12px;font-weight:600;color:#475569">${ratStr(v)} ${dArr(v,pv,s.lb)}</div>
+      </div><div style="flex-shrink:0;min-width:20px"></div>`;
+    }).join(''):'';
+
+    // ── Surface metrics
+    const callToSet=pct2(f.meetSet,f.dials);
+    const discToOpp=pct2(f.opps,f.holds);
+    const pCallToSet=pct2(pf.meetSet,pf.dials);
+    const pDiscToOpp=pct2(pf.opps,pf.holds);
+
+    // ── Goal math (always shown)
+    const quota=(quotaMap[r.id]||0)*quotaScale();
+    const att=f.splitMRR||f.wMRR;
+    const attPct=quota>0?Math.round(att/quota*100):null;
+    const attColor=attPct!==null?(attPct>=100?'#10b981':attPct>=70?'#f59e0b':'#ef4444'):'#94a3b8';
+    const revPerDial=f.dials>0&&att>0?att/f.dials:REV_PER_DIAL;
+    const dialsNeeded=quota>0?Math.ceil(quota/revPerDial):null;
+    const goalHtml=quota?`<div style="display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:#64748b;border-top:1px solid #f1f5f9;padding-top:7px;margin-top:8px">
+      <span>Quota <strong>$${(quota/1000).toFixed(1)}k</strong></span>
+      ${attPct!==null?`<span>Attainment <strong style="color:${attColor}">${attPct}%</strong></span>`:''}
+      ${dialsNeeded?`<span>Need <strong>${dialsNeeded.toLocaleString()}</strong> dials to quota (~${Math.ceil(dialsNeeded/days)}/day at $${Math.round(revPerDial)}/dial)</span>`:''}
+      <span>Pace <strong>${(f.dials/days).toFixed(1)}</strong> dials/day vs target ${DIAL_TARGET}</span>
+    </div>`:'';
+
+    // ── Focus area callout
+    const focus=focusArea(f);
+    const focusHtml=focus?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:6px 10px;font-size:11px;color:#92400e;margin-top:6px">${focus}</div>`:'';
+
+    // ── Header badges
+    const priorBadge=showCmp?`<span style="font-size:10px;color:#94a3b8;background:#f1f5f9;padding:2px 6px;border-radius:10px">vs. ${prior.label}</span>`:'';
+    const metricsHtml=`<div style="display:flex;gap:14px;font-size:11px;color:#475569;flex-wrap:wrap">
+      <span>Call→Set: <strong>${callToSet}%</strong>${showCmp?` ${dArr(callToSet,pCallToSet,false)} <span style="color:#94a3b8">(${f.meetSet}/${f.dials})</span>`:` <span style="color:#94a3b8">(${f.meetSet}/${f.dials})</span>`}</span>
+      <span>Win Rate: <strong>${winRate}%</strong>${showCmp?` ${dArr(winRate,pWinRate,false)}`:''}</span>
+      <span>Disc→Opp: <strong>${discToOpp}%</strong>${showCmp?` ${dArr(discToOpp,pDiscToOpp,false)}`:''}</span>
+    </div>`;
+
+    return `<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:14px 16px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="width:9px;height:9px;border-radius:50%;background:${tc};flex-shrink:0"></div>
+          <strong style="font-size:14px;color:#1e293b">${r.name}</strong>
+          ${priorBadge}
+        </div>
+        ${metricsHtml}
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:3px;margin-bottom:5px;overflow-x:auto;padding-bottom:2px">${stgBoxes}${lostBox}</div>
+      ${showCmp?`<div style="display:flex;gap:3px;margin-bottom:8px;overflow-x:auto">${ratBoxes}</div>`:''}
+      ${autoCallout(f,pf)}
+      ${focusHtml}
+      ${goalHtml}
+    </div>`;
+  };
+
+  const tipReps=reps.filter(r=>r.team==='tippets');
+  const sauReps=reps.filter(r=>r.team==='saumell');
+
+  // ── Team rollup summary (shown in collapsed header)
+  const teamRollup=(teamReps,psM,phM)=>{
+    const t=teamReps.reduce((a,r)=>{
+      const f=buildF(r,psM,phM);
+      a.dials+=f.dials;a.sets+=f.sets;a.holds+=f.holds;a.opps+=f.opps;
+      a.propsSet+=f.propsSet;a.won+=f.won;a.lost+=f.lost;
+      return a;
+    },{dials:0,sets:0,holds:0,opps:0,propsSet:0,won:0,lost:0});
+    const wr=t.won+t.lost>0?Math.round(t.won/(t.won+t.lost)*100):null;
+    const items=[['Dials',t.dials,'#64748b'],['Sets',t.sets,'#7c3aed'],['Holds',t.holds,'#0369a1'],
+      ['Opps',t.opps,'#b45309'],['Props',t.propsSet,'#0f766e'],['Won',t.won,'#15803d'],['Lost',t.lost,'#dc2626']];
+    return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1;min-width:0;margin-left:10px">
+      ${items.map(([l,v,c])=>`<span style="font-size:12px;white-space:nowrap"><strong style="color:${c}">${v}</strong> <span style="color:#94a3b8;font-size:10px">${l}</span></span>`).join('<span style="color:#e2e8f0;font-size:10px">·</span>')}
+      ${wr!==null?`<span style="font-size:11px;color:#10b981;font-weight:700;margin-left:2px">${wr}% WR</span>`:''}
+    </div>`;
+  };
+
+  // ── Compare period picker HTML
+  const cmpPickerHtml=(()=>{
+    if(!showCmp)return '';
+    const now=new Date(),cy=now.getFullYear(),cm=now.getMonth()+1;
+    let mOpts='';
+    for(let i=0;i<18;i++){
+      let mo=cm-i,yo=cy;while(mo<1){mo+=12;yo--;}
+      const v=`${yo}-${String(mo).padStart(2,'0')}`;
+      mOpts+=`<option value="${v}">${MONTHS[mo-1]} ${yo}</option>`;
+    }
+    let qOpts='';
+    const cq=Math.floor((cm-1)/3);
+    for(let i=0;i<8;i++){
+      let q=cq-i,y=cy;while(q<0){q+=4;y--;}
+      const v=`${y}-Q${q+1}`;
+      const sel=(_convCmpRange&&_convCmpRange.label===`Q${q+1} ${y}`)?'selected':'';
+      qOpts+=`<option value="${v}" ${sel}>Q${q+1} ${y}</option>`;
+    }
+    let yOpts='';
+    for(let y=cy;y>=cy-4;y--){
+      const sel=(_convCmpRange&&_convCmpRange.label===String(y))?'selected':'';
+      yOpts+=`<option value="${y}" ${sel}>${y}</option>`;
+    }
+    const selStyle='padding:5px 10px;border-radius:6px;border:1px solid #e2e8f0;background:white;color:#334155;font-size:13px;cursor:pointer';
+    return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+      <span style="font-size:12px;color:#64748b;font-weight:600">Compare to:</span>
+      <select id="conv-cmp-type-sel" onchange="onConvCmpTypeChange()" style="${selStyle}">
+        <option value="auto" ${_convCmpType==='auto'?'selected':''}>Auto (prior period)</option>
+        <option value="month" ${_convCmpType==='month'?'selected':''}>Specific month</option>
+        <option value="quarter" ${_convCmpType==='quarter'?'selected':''}>Specific quarter</option>
+        <option value="year" ${_convCmpType==='year'?'selected':''}>Specific year</option>
+      </select>
+      <div id="conv-cmp-month-wrap" style="display:${_convCmpType==='month'?'flex':'none'}">
+        <select id="conv-cmp-month-inp" onchange="onConvCmpPeriodChange()" style="${selStyle}">${mOpts}</select>
+      </div>
+      <div id="conv-cmp-quarter-wrap" style="display:${_convCmpType==='quarter'?'flex':'none'}">
+        <select id="conv-cmp-quarter-sel" onchange="onConvCmpPeriodChange()" style="${selStyle}">${qOpts}</select>
+      </div>
+      <div id="conv-cmp-year-wrap" style="display:${_convCmpType==='year'?'flex':'none'}">
+        <select id="conv-cmp-year-sel" onchange="onConvCmpPeriodChange()" style="${selStyle}">${yOpts}</select>
+      </div>
+      <span style="font-size:11px;color:#94a3b8">Comparing to: <strong style="color:#334155">${prior.label||'—'}</strong></span>
+    </div>`;
+  })();
+
+  document.getElementById('main').innerHTML=`<div class="main">
+    <div style="background:#1e3a5f;color:#dbeafe;border-radius:8px;padding:9px 16px;font-size:11px;line-height:1.9;margin-bottom:10px">
+      <strong>Funnel (raw counts):</strong> Dials → Sets → Holds → Opps → Props → Won | Lost &nbsp;·&nbsp;
+      <strong>Ratios = inputs per output</strong> (lower is better) &nbsp;·&nbsp; Benchmarks: ${DIAL_TARGET} dials/day · $${REV_PER_DIAL}/dial
+    </div>
+    <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:${showCmp?'0':'10px'}">
+      <button id="conv-cmp-btn" onclick="toggleConvComparison()" style="padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid ${showCmp?'#93c5fd':'#e2e8f0'};background:${showCmp?'#dbeafe':'white'};color:${showCmp?'#1d4ed8':'#64748b'};transition:all .15s">${showCmp?'↕ Hide comparison':'↕ Show comparison'}</button>
+    </div>
+    ${cmpPickerHtml}
+    <div style="margin-top:10px"></div>
+    <div class="conv-team-section" id="conv-team-tippets">
+      <div class="conv-team-hdr" onclick="toggleConvTeam('tippets')">
+        <span class="conv-team-toggle collapsed" id="conv-toggle-tippets">▼</span>
+        <span class="conv-team-name" style="color:#3b82f6">Team Tippets</span>
+        <span class="conv-team-count">${tipReps.length} reps</span>
+        ${teamRollup(tipReps,psMap,phMap)}
+      </div>
+      <div class="conv-team-body collapsed" id="conv-body-tippets">
+        ${tipReps.map(repCard).join('')}
+      </div>
+    </div>
+    <div class="conv-team-section" id="conv-team-saumell">
+      <div class="conv-team-hdr" onclick="toggleConvTeam('saumell')">
+        <span class="conv-team-toggle collapsed" id="conv-toggle-saumell">▼</span>
+        <span class="conv-team-name" style="color:#8b5cf6">Team Saumell</span>
+        <span class="conv-team-count">${sauReps.length} reps</span>
+        ${teamRollup(sauReps,psMap,phMap)}
+      </div>
+      <div class="conv-team-body collapsed" id="conv-body-saumell">
+        ${sauReps.map(repCard).join('')}
+      </div>
+    </div>
+    <div style="background:#f8fafc;border-radius:8px;padding:10px 16px;font-size:11px;color:#94a3b8;line-height:1.8;margin-top:4px">
+      <strong style="color:#64748b">Key:</strong>
+      D/Set = dials per set &nbsp;·&nbsp; S/Hold = sets per hold &nbsp;·&nbsp; H/Opp = holds per opp &nbsp;·&nbsp; O/Prop = opps per proposal &nbsp;·&nbsp; P/Won = proposals per close &nbsp;·&nbsp;
+      Call→Set = dials with "Meeting Set" disposition &nbsp;·&nbsp; Props = opps that entered Proposal stage in period
+    </div>
+  </div>`;
+}
+
 // ── GM ROLLUP TAB ─────────────────────────────────────────────────────────────
 async function loadGM(){
   const range=getRange();
@@ -1182,8 +1597,9 @@ function gmKPIBarHTML(tAll,reps,quotaTotal,cancelledMRR,preLaunchCancelCount){
   const activeSellers=reps.filter(r=>r.dials>0).length;
   const openPipeline=tAll.pMRR+tAll.fMRR+tAll.dpMRR;
   const netMRR=cancelledMRR>0?tAll.wMRR-cancelledMRR:null;
-  const goalPct=quotaTotal>0?Math.round(tAll.wMRR/quotaTotal*100):null;
-  const quotaGap=quotaTotal>0?quotaTotal-tAll.wMRR:null;
+  const splitMRRAll=tAll.splitMRR||tAll.wMRR;
+  const goalPct=quotaTotal>0?Math.round(splitMRRAll/quotaTotal*100):null;
+  const quotaGap=quotaTotal>0?quotaTotal-splitMRRAll:null;
 
   const goalColor=goalPct===null?'#94a3b8':goalPct>=100?'#10b981':goalPct>=75?'#f59e0b':'#ef4444';
   const gapColor=quotaGap===null?'#94a3b8':quotaGap<=0?'#10b981':'#ef4444';
@@ -1221,7 +1637,7 @@ function gmKPIBarHTML(tAll,reps,quotaTotal,cancelledMRR,preLaunchCancelCount){
       openPipeline>0?fmtMRR(openPipeline):'—',
       `${tAll.props+tAll.fcst} Proposal/Forecast opps`,
       '#3b82f6',
-      'Sum of MRR across all open Discovery, Proposal, and Forecast opportunities (no date filter)')}
+      'Sum of MRR across ALL currently open Discovery, Proposal, and Forecast opps. No date filter — snapshot of full active pipeline. Target coverage = 4× combined quota.')}
     ${kpitile('Active Sellers',
       activeSellers,
       `of ${reps.length} total`,
@@ -1235,7 +1651,7 @@ function pipelineChartHTML(){
   return `<div class="chart-card">
     <div class="chart-card-hdr">
       <span class="chart-card-title">Pipeline by Stage (MRR)</span>
-      <span style="font-size:9px;color:#94a3b8">Discovery · Proposal · Forecast = current open &nbsp;|&nbsp; Closed Won = period</span>
+      <span style="font-size:9px;color:#94a3b8">Discovery · Proposal · Forecast = ALL currently open opps (no date filter) &nbsp;|&nbsp; Closed Won = selected period</span>
     </div>
     <div class="chart-container">
       <canvas id="pipeline-chart"></canvas>
@@ -1518,10 +1934,11 @@ function openRepCard(repId){
   if(!d)return;
   const{r,quota,range}=d;
   const teamCfg=TEAMS[r.team];
-  const att=quota>0?Math.round(r.wMRR/quota*100):null;
+  const sMRR=r.splitMRR||r.wMRR;
+  const att=quota>0?Math.round(sMRR/quota*100):null;
   const attColor=att===null?'#94a3b8':att>=100?'#10b981':att>=75?'#f59e0b':'#ef4444';
   const cP=pct(r.connects,r.dials),dP=pct(r.disc,r.connects);
-  const rpd=r.dials>0&&r.wMRR>0?'$'+Math.round(r.wMRR/r.dials):'—';
+  const rpd=r.dials>0&&sMRR>0?'$'+Math.round(sMRR/r.dials):'—';
   const winRate=pct(r.won,r.won+(r.lost||0));
   const periodStart=range?.start||'2026-01-01';
 
@@ -1567,6 +1984,7 @@ function openRepCard(repId){
       <div class="modal-section-title">Revenue</div>
       <div class="modal-grid">
         ${stat(r.wMRR>0?fmtMRR(r.wMRR):'—','Gross MRR Closed','#10b981')}
+        ${sMRR!==r.wMRR&&r.wMRR>0?stat(fmtMRR(sMRR),'Split MRR Credit','#0369a1'):''}
         ${stat(quota>0?fmtMRR(quota):'—','Quota (monthly)','#64748b')}
         ${stat(rpd,'Revenue per Dial','#3b82f6')}
         <div class="modal-stat">
@@ -1625,9 +2043,10 @@ function tableAreaHTML(range,reps,quotaMap={}){
        ${th('Forecast',`Open opps in Forecast stage (CloseDate in period${isDay?' — expanded to current week for single-day views':''})`,'wk min')}
        ${th('Pipeline $',`Total open pipeline MRR across Discovery + Proposal + Forecast (CloseDate in period${isDay?' — expanded to current week for single-day views':''}). Excludes 1SEO opps for Frost and Compston.`,'wk min')}
        ${th('Won','Closed Won deals in this period')}
-       ${th('Gross MRR','Total Monthly Recurring Revenue from Closed Won deals in this period')}
-       ${th('Quota','Monthly MRR quota from the rep\'s Salesforce user profile','monthly')}
-       ${th('Attainment','Gross MRR ÷ monthly quota. Green ≥100%, Yellow ≥75%, Red <75%')}`
+       ${th('Split MRR','MRR attributed via Opportunity Splits. Reflects each rep\'s share of co-credited deals. Falls back to full Gross MRR if splits not configured.')}
+       ${th('Quota',`${quotaPeriodLabel().charAt(0).toUpperCase()+quotaPeriodLabel().slice(1)} MRR quota scaled from the rep's Salesforce profile`,quotaPeriodLabel())}
+       ${th('Attainment','Split MRR ÷ period quota. Green ≥100%, Yellow ≥75%, Red <75%')}
+       ${th('4x Cover','Open pipeline ÷ quota. Target is 4x. Green ≥4x, Yellow ≥2x, Red <2x.')}`
     : `<th style="text-align:left" class="tip" data-tip="Seller name — click to open rep scorecard">Team / Seller</th>
        ${th('Dials','Total outbound calls logged this period (TaskSubtype = Call)')}
        ${th('Emails','Outbound emails sent this period (TaskSubtype = Email)')}
@@ -1636,13 +2055,14 @@ function tableAreaHTML(range,reps,quotaMap={}){
        ${th('Set%','% of live connects that resulted in a Discovery / meeting set')}
        ${th('Held','Meetings held in this period: Events with Type=Meeting and Outcome=Completed, where ActivityDate falls in the selected range')}
        ${th('Hold%','Held ÷ meetings on the calendar in this period (not ÷ sets). Both numerator and denominator use ActivityDate in range.')}
-       ${th('Proposal','Open opps in Proposal stage with CloseDate in period. Minimum weekly view — single-day picker expands to current week.','wk min')}
-       ${th('Forecast','Open opps in Forecast stage with CloseDate in period. Minimum weekly view — single-day picker expands to current week.','wk min')}
-       ${th('Pipeline $','Total open pipeline MRR across Discovery + Proposal + Forecast (CloseDate in period). Minimum weekly view for single-day pickers. Excludes 1SEO opps for Frost and Compston.','wk min')}
+       ${th('Proposal','All currently open Proposal stage opps (no date filter). Represents active pipeline health.','open')}
+       ${th('Forecast','All currently open Forecast stage opps (no date filter). Represents active pipeline health.','open')}
+       ${th('Pipeline $','Total open pipeline MRR across all currently open Discovery + Proposal + Forecast opps. No date filter — this is the rep\'s live pipeline.','open')}
        ${th('Won','Closed Won deals with close date in this period')}
-       ${th('Gross MRR','Total Monthly Recurring Revenue from Closed Won deals')}
-       ${th('Quota','Monthly MRR quota from the rep\'s Salesforce user profile','monthly')}
-       ${th('Attainment','Gross MRR ÷ monthly quota. Green ≥100%, Yellow ≥75%, Red <75%')}`;
+       ${th('Split MRR','MRR attributed via Opportunity Splits. Reflects each rep\'s share of co-credited deals. Falls back to full Gross MRR if splits not configured.')}
+       ${th('Quota',`${quotaPeriodLabel().charAt(0).toUpperCase()+quotaPeriodLabel().slice(1)} MRR quota scaled from the rep's Salesforce profile`,quotaPeriodLabel())}
+       ${th('Attainment','Split MRR ÷ period quota. Green ≥100%, Yellow ≥75%, Red <75%')}
+       ${th('4x Cover','Open pipeline ÷ quota. Target is 4x. Green ≥4x, Yellow ≥2x, Red <2x.','tgt 4x')}`;
 
   return `<div class="table-card">
     <div class="table-hdr">
@@ -1702,8 +2122,12 @@ function accTeamBlock(teamKey,cfg,t,sortedReps,isShort,isDay,dialTgt,setsTgt,quo
       const rc=pct(r.connects,r.dials);
       const rHoldPct=pct(r.held||0,r.mSched||0);
       const rd=r.dials>0&&r.wMRR>0?'$'+Math.round(r.wMRR/r.dials):'—';
-      const rQ=quotaMap[r.id]||0;
-      const rAtt=rQ>0?Math.round(r.wMRR/rQ*100):null;
+      const rQ=(quotaMap[r.id]||0)*quotaScale();
+      const rSplitMRR=r.splitMRR||r.wMRR||0;
+      const rAtt=rQ>0?Math.round(rSplitMRR/rQ*100):null;
+      const rOpenPipe=r.pMRR+r.fMRR+(r.dpMRR||0);
+      const rCoverX=rQ>0?rOpenPipe/rQ:null;
+      const rCoverColor=rCoverX===null?'#94a3b8':rCoverX>=4?'#10b981':rCoverX>=2?'#f59e0b':'#ef4444';
       // Per-rep targets from SF User profile
       const _rut=_userTargets[r.id]||{};
       const rCallsDay=_rut.callsDay||T.CALLS_DAY;
@@ -1721,11 +2145,12 @@ function accTeamBlock(teamKey,cfg,t,sortedReps,isShort,isDay,dialTgt,setsTgt,quo
         <td><span class="pct ${pcc(rHoldPct,70,50)}">${rHoldPct?rHoldPct+'%':'—'}</span></td>
         <td>${r.props>0?`<span class="num">${r.props}</span>`:`<span class="dim">—</span>`}</td>
         <td>${r.fcst>0?`<span class="num">${r.fcst}</span>`:`<span class="dim">—</span>`}</td>
-        <td>${(r.pMRR+r.fMRR+(r.dpMRR||0))>0?`<span style="color:#f59e0b;font-weight:700;font-size:11px">${fmtMRR(r.pMRR+r.fMRR+(r.dpMRR||0))}</span>${rPipeCnt>0?`<div style="font-size:10px;color:#94a3b8;margin-top:1px">${rPipeCnt} deals</div>`:''}`:`<span class="dim">—</span>`}</td>
+        <td>${rOpenPipe>0?`<span style="color:#f59e0b;font-weight:700;font-size:11px">${fmtMRR(rOpenPipe)}</span>${rPipeCnt>0?`<div style="font-size:10px;color:#94a3b8;margin-top:1px">${rPipeCnt} deals</div>`:''}`:`<span class="dim">—</span>`}</td>
         <td><span class="pct ${r.won>=T.CLOSES_MONTH?'hi':r.won>0?'mid':'lo'}">${r.won||'—'}</span></td>
-        <td>${r.wMRR>0?`<span class="mrr">${fmtMRR(r.wMRR)}</span>`:`<span class="dim">—</span>`}</td>
+        <td>${rSplitMRR>0?`<span class="mrr">${fmtMRR(rSplitMRR)}</span>${r.wMRR&&r.wMRR!==rSplitMRR?`<div style="font-size:10px;color:#94a3b8">gross ${fmtMRR(r.wMRR)}</div>`:''}`:`<span class="dim">—</span>`}</td>
         <td>${rQ>0?`<span class="num">${fmtMRR(rQ)}</span>`:`<span class="dim">—</span>`}</td>
         <td>${attBarHTML(rAtt)}</td>
+        <td>${rCoverX!==null?`<span style="font-weight:700;color:${rCoverColor}">${rCoverX.toFixed(1)}x</span><div style="font-size:10px;color:#94a3b8">of 4x tgt</div>`:`<span class="dim">—</span>`}</td>
       </tr>`;
     };
   }else{
@@ -1751,8 +2176,12 @@ function accTeamBlock(teamKey,cfg,t,sortedReps,isShort,isDay,dialTgt,setsTgt,quo
       const rc=pct(r.connects,r.dials),rd2=pct(r.disc,r.connects);
       const rHoldPct=pct(r.held||0,r.mSched||0);
       const rd=r.dials>0&&r.wMRR>0?'$'+Math.round(r.wMRR/r.dials):'—';
-      const rQ=quotaMap[r.id]||0;
-      const rAtt=rQ>0?Math.round(r.wMRR/rQ*100):null;
+      const rQ=(quotaMap[r.id]||0)*quotaScale();
+      const rSplitMRR=r.splitMRR||r.wMRR||0;
+      const rAtt=rQ>0?Math.round(rSplitMRR/rQ*100):null;
+      const rOpenPipe=r.pMRR+r.fMRR+(r.dpMRR||0);
+      const rCoverX=rQ>0?rOpenPipe/rQ:null;
+      const rCoverColor=rCoverX===null?'#94a3b8':rCoverX>=4?'#10b981':rCoverX>=2?'#f59e0b':'#ef4444';
       const rPipeCntL=(r.props||0)+(r.fcst||0)+(r.dpCnt||0);
       _repScoreData[r.id]={r,quota:rQ,range:_repScoreRange};
       return `<tr class="acc-rep-row" data-team="${teamKey}">
@@ -1766,11 +2195,12 @@ function accTeamBlock(teamKey,cfg,t,sortedReps,isShort,isDay,dialTgt,setsTgt,quo
         <td><span class="pct ${pcc(rHoldPct,70,50)}">${rHoldPct?rHoldPct+'%':'—'}</span></td>
         <td>${r.props>0?`<span class="num">${r.props}</span>`:`<span class="dim">—</span>`}</td>
         <td>${r.fcst>0?`<span class="num">${r.fcst}</span>`:`<span class="dim">—</span>`}</td>
-        <td>${(r.pMRR+r.fMRR+(r.dpMRR||0))>0?`<span style="color:#f59e0b;font-weight:700;font-size:11px">${fmtMRR(r.pMRR+r.fMRR+(r.dpMRR||0))}</span>${rPipeCntL>0?`<div style="font-size:10px;color:#94a3b8;margin-top:1px">${rPipeCntL} deals</div>`:''}`:`<span class="dim">—</span>`}</td>
+        <td>${rOpenPipe>0?`<span style="color:#f59e0b;font-weight:700;font-size:11px">${fmtMRR(rOpenPipe)}</span>${rPipeCntL>0?`<div style="font-size:10px;color:#94a3b8;margin-top:1px">${rPipeCntL} deals</div>`:''}`:`<span class="dim">—</span>`}</td>
         <td>${r.won>0?`<span class="num">${r.won}</span>`:`<span class="dim">—</span>`}</td>
-        <td>${r.wMRR>0?`<span class="mrr">${fmtMRR(r.wMRR)}</span>`:`<span class="dim">—</span>`}</td>
+        <td>${rSplitMRR>0?`<span class="mrr">${fmtMRR(rSplitMRR)}</span>${r.wMRR&&r.wMRR!==rSplitMRR?`<div style="font-size:10px;color:#94a3b8">gross ${fmtMRR(r.wMRR)}</div>`:''}`:`<span class="dim">—</span>`}</td>
         <td>${rQ>0?`<span class="num">${fmtMRR(rQ)}</span>`:`<span class="dim">—</span>`}</td>
         <td>${attBarHTML(rAtt)}</td>
+        <td>${rCoverX!==null?`<span style="font-weight:700;color:${rCoverColor}">${rCoverX.toFixed(1)}x</span><div style="font-size:10px;color:#94a3b8">of 4x tgt</div>`:`<span class="dim">—</span>`}</td>
       </tr>`;
     };
   }
@@ -1796,8 +2226,9 @@ function toggleAcc(teamKey){
 function combinedTotRow(t,isShort,allQuota=0){
   const cP=pct(t.connects,t.dials),dP=pct(t.disc,t.connects);
   const holdP=pct(t.held,t.disc);
-  const rpd=t.dials>0&&t.wMRR>0?'$'+Math.round(t.wMRR/t.dials):'—';
-  const tAtt=allQuota>0?Math.round(t.wMRR/allQuota*100):null;
+  const sMRR=t.splitMRR||t.wMRR;
+  const rpd=t.dials>0&&sMRR>0?'$'+Math.round(sMRR/t.dials):'—';
+  const tAtt=allQuota>0?Math.round(sMRR/allQuota*100):null;
   const qCell=`<td>${allQuota>0?`<span class="num">${fmtMRR(allQuota)}</span>`:`<span class="dim">—</span>`}</td>`;
   const aCell=`<td>${attBarHTML(tAtt)}</td>`;
   const totPipeCnt=(t.props||0)+(t.fcst||0)+(t.dpCnt||0);
@@ -1813,7 +2244,7 @@ function combinedTotRow(t,isShort,allQuota=0){
     <td><span class="num">${t.fcst}</span></td>
     <td>${(t.pMRR+t.fMRR+t.dpMRR)>0?`<span style="color:#f59e0b;font-weight:700;font-size:11px">${fmtMRR(t.pMRR+t.fMRR+t.dpMRR)}</span>${pipeCntSub}`:`<span class="dim">—</span>`}</td>
     <td><span class="num ${t.won>0?'hi':'dim'}">${t.won||'—'}</span></td>
-    <td>${t.wMRR>0?`<span class="mrr">${fmtMRR(t.wMRR)}</span>`:`<span class="dim">—</span>`}</td>
+    <td>${sMRR>0?`<span class="mrr">${fmtMRR(sMRR)}</span>${sMRR!==t.wMRR&&t.wMRR>0?`<div style="font-size:10px;color:#94a3b8">gross ${fmtMRR(t.wMRR)}</div>`:''}`:`<span class="dim">—</span>`}</td>
     ${qCell}${aCell}
   </tr>`;
   return `<tr class="tot">
@@ -1829,7 +2260,7 @@ function combinedTotRow(t,isShort,allQuota=0){
     <td><span class="num">${t.fcst}</span></td>
     <td>${(t.pMRR+t.fMRR+t.dpMRR)>0?`<span style="color:#f59e0b;font-weight:700;font-size:11px">${fmtMRR(t.pMRR+t.fMRR+t.dpMRR)}</span>${pipeCntSub}`:`<span class="dim">—</span>`}</td>
     <td><span class="num ${t.won>0?'hi':'dim'}">${t.won||'—'}</span></td>
-    <td>${t.wMRR>0?`<span class="mrr">${fmtMRR(t.wMRR)}</span>`:`<span class="dim">—</span>`}</td>
+    <td>${sMRR>0?`<span class="mrr">${fmtMRR(sMRR)}</span>${sMRR!==t.wMRR&&t.wMRR>0?`<div style="font-size:10px;color:#94a3b8">gross ${fmtMRR(t.wMRR)}</div>`:''}`:`<span class="dim">—</span>`}</td>
     ${qCell}${aCell}
   </tr>`;
 }
@@ -1837,17 +2268,12 @@ function combinedTotRow(t,isShort,allQuota=0){
 // ── COMPARE ───────────────────────────────────────────────────────────────────
 async function fetchPeriod(range,stepBase,totalSteps){
   const{start,end}=range;
-  // Exclude all 1SEO opps for Frost/Compston from sets, won, and lost
-  let seoExclude='';
-  try{
-    const seoAll=await sf(`SELECT Id FROM Opportunity WHERE OwnerId IN ('0055f00000AWG5wAAH','005Rj00000GpYeNIAV') AND Name LIKE '%1SEO%'`);
-    if(seoAll.length>0){const ids=seoAll.map(r=>`'${r.Id}'`).join(',');seoExclude=` AND Id NOT IN (${ids})`;}
-  }catch(e){}
+  let seoExclude=''; // 1SEO included — no exclusion applied
   prog(`Dials ${range.label}…`,stepBase,totalSteps);
-  const dialRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Task WHERE TaskSubtype='Call' AND OwnerId IN (${ALL_IDS}) AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z GROUP BY OwnerId`);
+  const dialRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Task WHERE TaskSubtype='Call' AND OwnerId IN (${ALL_IDS}) AND ActivityDate>=${start} AND ActivityDate<=${end} GROUP BY OwnerId`);
   const dialMap=toMap(dialRecs,'OwnerId','total');
   prog(`Connects ${range.label}…`,stepBase+1,totalSteps);
-  const connRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Task WHERE TaskSubtype='Call' AND CallDisposition IN (${CONN_DISPS}) AND OwnerId IN (${ALL_IDS}) AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z GROUP BY OwnerId`);
+  const connRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Task WHERE TaskSubtype='Call' AND CallDisposition IN (${CONN_DISPS}) AND OwnerId IN (${ALL_IDS}) AND ActivityDate>=${start} AND ActivityDate<=${end} GROUP BY OwnerId`);
   const connMap=toMap(connRecs,'OwnerId','total');
   prog(`Sets ${range.label}…`,stepBase+2,totalSteps);
   const discRecs=await sf(`SELECT OwnerId,COUNT(Id) total FROM Opportunity WHERE OwnerId IN (${ALL_IDS}) AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z${seoExclude} GROUP BY OwnerId`);
@@ -2020,7 +2446,7 @@ async function loadYearly(){
     prog('YTD Open Pipeline… 3/4',3,4);
     const pipeRecs = await sf(`SELECT OwnerId,StageName,SUM(Monthly_Recurring_Revenue__c) mrr FROM Opportunity WHERE StageName IN ('Discovery','Proposal','Forecast') AND IsClosed=false AND OwnerId IN (${ALL_IDS}) GROUP BY OwnerId,StageName`);
     prog('YTD Dials… 4/4',4,4);
-    const dialRecs = await sf(`SELECT OwnerId,COUNT(Id) total FROM Task WHERE TaskSubtype='Call' AND OwnerId IN (${ALL_IDS}) AND CreatedDate>=${start}T00:00:00Z AND CreatedDate<=${end}T23:59:59Z GROUP BY OwnerId`);
+    const dialRecs = await sf(`SELECT OwnerId,COUNT(Id) total FROM Task WHERE TaskSubtype='Call' AND OwnerId IN (${ALL_IDS}) AND ActivityDate>=${start} AND ActivityDate<=${end} GROUP BY OwnerId`);
 
     const wonMRRmap={}, wonCntmap={};
     for(const r of wonRecs){wonMRRmap[r.OwnerId]=r.mrr||0; wonCntmap[r.OwnerId]=r.total||0;}
@@ -2763,12 +3189,10 @@ document.querySelectorAll('.tab').forEach(btn=>{
     document.getElementById('sub-filter-bar').style.display = mainTab!=='compare'?'flex':'none';
     document.getElementById('cmp-filter-bar').style.display = mainTab==='compare'?'flex':'none';
     if(mainTab==='compare')updateCmpRangeLabel();
+    updateShortPills();
     load();
   });
 });
-
-// Default day-picker to today
-document.getElementById('day-picker').value = tod();
 
 // Build year picker (last 4 years + current)
 (function(){
@@ -2782,6 +3206,9 @@ document.getElementById('day-picker').value = tod();
   }
 })();
 
+// Default day-picker to today
+document.getElementById('day-picker').value = tod();
+
 function updatePickers(){
   document.getElementById('date-filter').style.display    = subView==='date'    ?'flex':'none';
   document.getElementById('fsep-date').style.display      = subView==='date'    ?'block':'none';
@@ -2791,6 +3218,23 @@ function updatePickers(){
   document.getElementById('fsep-quarter').style.display   = subView==='quarter' ?'block':'none';
   document.getElementById('year-filter').style.display    = subView==='year'    ?'flex':'none';
   document.getElementById('fsep-year').style.display      = subView==='year'    ?'block':'none';
+}
+
+// Hide Today/Date/Week pills on Conversions tab; restore on others
+function updateShortPills(){
+  const hideShort = mainTab==='conversions';
+  ['today','date','week'].forEach(v=>{
+    const el=document.querySelector(`.vpill[data-view="${v}"]`);
+    if(el) el.style.display=hideShort?'none':'';
+  });
+  if(hideShort&&(subView==='today'||subView==='date'||subView==='week')){
+    subView='month';
+    document.querySelectorAll('.vpill').forEach(v=>v.classList.remove('active'));
+    const mp=document.querySelector('.vpill[data-view="month"]');
+    if(mp) mp.classList.add('active');
+    updatePickers();
+  }
+}
 }
 document.querySelectorAll('.vpill').forEach(btn=>{
   btn.addEventListener('click',()=>{
