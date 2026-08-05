@@ -448,7 +448,7 @@ tr.acc-rep-row:hover td{background:#fafafa}
 </div>
 
 <!-- ── AUTH SCREEN ─────────────────────────────────────────────────────── -->
-<div id="auth-screen" style="display:none;position:fixed;inset:0;background:#0f172a;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px">
+<div id="auth-screen" style="display:none;position:fixed;inset:0;background:#0f172a;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:24px">
   <div style="text-align:center">
     <div style="font-size:48px;font-weight:900;color:#fff;letter-spacing:-1px">Home Services</div>
     <div style="font-size:20px;color:#475569;margin-top:4px">Sales Dashboard</div>
@@ -500,7 +500,6 @@ const _mem={};
 function storSet(k,v){try{localStorage.setItem(k,v);}catch(e){_mem[k]=v;}}
 function storGet(k){try{return localStorage.getItem(k);}catch(e){return _mem[k]??null;}}
 function storDel(k){try{localStorage.removeItem(k);}catch(e){delete _mem[k];}}
-}
 
 // ── Auth screen show/hide ────────────────────────────────────────────────────
 function showAuthScreen(errMsg){
@@ -3286,3 +3285,4 @@ initAuth();
 </script>
 </body>
 </html>
+
